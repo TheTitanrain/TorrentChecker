@@ -59,6 +59,17 @@ public static class OptionsTests
                 auto.Checked = false;
                 Check(Invoke(form, "GetAutoCheckingError") == null, "disabled auto-check permits no rules");
                 Check((bool)Invoke(form, "MakeChecks"), "normal options remain valid without rules");
+                foreach (var invalid in new[]{"0", "-1", "1.5", "abc", "", "2147483648"})
+                {
+                    Control(form, "txtTorrentsStoreTime").Text = invalid;
+                    Check(!String.IsNullOrEmpty((string)Invoke(form, "GetRetentionError")), "reject retention " + invalid);
+                }
+                foreach (var valid in new[]{"1", "30", "99", "2147483647"})
+                {
+                    Control(form, "txtTorrentsStoreTime").Text = valid;
+                    Check(Invoke(form, "GetRetentionError") == null, "accept retention " + valid);
+                    Check((bool)Invoke(form, "MakeChecks"), "form accepts retention " + valid);
+                }
             }
         }
         finally

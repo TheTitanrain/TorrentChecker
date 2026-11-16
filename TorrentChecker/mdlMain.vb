@@ -228,7 +228,8 @@ Public Module mdlMain
     Public LAST_CHECK_TIME As DateTime = UNIX_TIME_ORIGIN
     Public APP_PAUSED As Boolean = False
     Public APP_HIDDEN As Boolean = False
-    Public TORRENTS_MAX_STORETIME As Long = 24 * 60 * 60 * 30 '30 days
+    Public Const DEFAULT_TORRENTS_MAX_STORETIME As Long = 2592000 '30 days
+    Public TORRENTS_MAX_STORETIME As Long = DEFAULT_TORRENTS_MAX_STORETIME
     Public TORRENTS_MAX_RESULTS As Short = 100
     Public CHECK_INTERVAL As Integer = 15 * 60 * 1000 '15 minutes
 

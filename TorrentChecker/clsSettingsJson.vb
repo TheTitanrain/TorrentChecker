@@ -136,7 +136,8 @@ Friend Module clsSettingsJson
         proxy("proxy_address") = DirectCast(proxy("proxy_address"), String)
         proxy("proxy_port") = DirectCast(proxy("proxy_port"), String)
         Dim interval = If(wire.ContainsKey("checkInterval"), CInt(WholeNumber(wire("checkInterval"))), CHECK_INTERVAL)
-        Dim retention = If(wire.ContainsKey("historyRetention"), WholeNumber(wire("historyRetention")), TORRENTS_MAX_STORETIME)
+        Dim retention = If(wire.ContainsKey("historyRetention"), WholeNumber(wire("historyRetention")), DEFAULT_TORRENTS_MAX_STORETIME)
+        If retention <= 0 Then retention = DEFAULT_TORRENTS_MAX_STORETIME
         Dim maxResults = If(wire.ContainsKey("maxResults"), CShort(WholeNumber(wire("maxResults"))), TORRENTS_MAX_RESULTS)
         If interval <= 0 Then Throw New InvalidDataException("Неверный интервал проверки.")
         Return New Dictionary(Of String, Object) From {

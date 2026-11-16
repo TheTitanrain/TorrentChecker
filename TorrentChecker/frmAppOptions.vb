@@ -115,17 +115,11 @@
             Return False
         End If
 
-        If Not Integer.TryParse(txtTorrentsStoreTime.Text, x) Then
-            MsgBox("Неправильный срок хранения. Он должен состоять только из цифр", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+        Dim retentionError = GetRetentionError()
+        If retentionError IsNot Nothing Then
+            MsgBox(retentionError, MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
             txtTorrentsStoreTime.SelectAll()
             txtTorrentsStoreTime.Focus()
-            Return False
-        End If
-
-        If CInt(txtCheckInterval.Text) = 0 Then
-            MsgBox("Некорректный срок хранения. Он должен быть как минимум 1 день", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
-            txtCheckInterval.SelectAll()
-            txtCheckInterval.Focus()
             Return False
         End If
 
@@ -151,6 +145,15 @@
         End If
 
         Return True
+    End Function
+
+    Private Function GetRetentionError() As String
+        Dim days As Integer
+        If Not Integer.TryParse(txtTorrentsStoreTime.Text, days) Then
+            Return "Неправильный срок хранения. Он должен быть целым числом дней"
+        End If
+        If days < 1 Then Return "Некорректный срок хранения. Он должен быть как минимум 1 день"
+        Return Nothing
     End Function
 
     Private Function GetAutoCheckingError() As String

@@ -338,6 +338,57 @@ try {
     try { $null = Invoke-Store (New-Store $root) Load @($unexpected) }
     catch { $broken = $_.Exception.InnerException -is [IO.InvalidDataException] }
     Assert ($broken -and (Test-Path -LiteralPath $historyPath)) 'Reject invalid history ID without retrying legacy or modifying history'
+
+    $savedRetention = [TorrentChecker.mdlMain]::TORRENTS_MAX_STORETIME
+    try {
+        [TorrentChecker.mdlMain]::TORRENTS_MAX_STORETIME = 42
+        [IO.File]::WriteAllText($settingsPath, $rawJson)
+        foreach ($retention in @([long]0, [long]-1, [long]1, [long]20000000001, [long]::MaxValue)) {
+            $wire = Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json
+            $wire.historyRetention = $retention
+            [IO.File]::WriteAllText($settingsPath, ($wire | ConvertTo-Json -Depth 30))
+            $retentionStore = New-Store $root
+            $loaded = Invoke-Store $retentionStore Load @($unexpected)
+            $expected = if ($retention -le 0) { [long]2592000 } else { $retention }
+            Assert ($loaded['TORRENTS_MAX_STORETIME'] -eq $expected) "JSON retention $retention loads exactly or recovers to fixed default"
+            $null = Invoke-Store $retentionStore Save @($loaded, $false)
+            $manifest = Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json
+            Assert ($manifest.historyRetention -eq $expected) "Next save persists retention $expected"
+            $loaded = Invoke-Store (New-Store $root) Load @($unexpected)
+            Assert ($loaded['TORRENTS_MAX_STORETIME'] -eq $expected) "Saved retention $expected reloads exactly"
+        }
+        foreach ($retention in @([long]0, [long]-1)) {
+            $importRoot = Join-Path $root ('retention-' + [Guid]::NewGuid().ToString('N'))
+            $null = [IO.Directory]::CreateDirectory($importRoot)
+            $importStore = New-Store $importRoot
+            $importPath = Join-Path $importRoot 'settings.dat'
+            $importManifest = $null
+            try {
+                $fixture['TORRENTS_MAX_STORETIME'] = $retention
+                $stream = [IO.File]::Create($importPath)
+                try {
+                    $gzip = New-Object IO.Compression.GZipStream($stream, [IO.Compression.CompressionMode]::Compress)
+                    try { (New-Object Runtime.Serialization.Formatters.Binary.BinaryFormatter).Serialize($gzip, $fixture) }
+                    finally { $gzip.Dispose() }
+                } finally { $stream.Dispose() }
+                $sourceHash = (Get-FileHash -LiteralPath $importPath).Hash
+                $loaded = Invoke-Store $importStore Load @($accept)
+                $importManifest = Get-Content -LiteralPath (Join-Path $importRoot 'settings.json') -Raw | ConvertFrom-Json
+                Assert ($loaded['TORRENTS_MAX_STORETIME'] -eq 2592000 -and $loaded['KeyWordsParams'][7]['label'] -ceq $rules[7]['label']) "Legacy retention $retention recovers and retains usable rules"
+                $null = Invoke-Store $importStore Save @($loaded, $false)
+                $importManifest = Get-Content -LiteralPath (Join-Path $importRoot 'settings.json') -Raw | ConvertFrom-Json
+                Assert ($importManifest.historyRetention -eq 2592000) 'Next legacy save persists recovered retention'
+                Assert ((Get-FileHash -LiteralPath $importPath).Hash -eq $sourceHash) 'Retention recovery preserves legacy source bytes'
+            } finally {
+                if ($null -ne $importManifest) {
+                    foreach ($service in @('rutracker', 'kinozal', 'proxy')) {
+                        $target = Invoke-Store $importStore Target @($importManifest.credentialId, $service)
+                        $null = $vaultType.GetMethod('DeleteCredential', $staticFlags).Invoke($null, @($target))
+                    }
+                }
+            }
+        }
+    } finally { [TorrentChecker.mdlMain]::TORRENTS_MAX_STORETIME = $savedRetention }
 } finally {
     if ($null -ne $lock) { $lock.Dispose() }
     try {
