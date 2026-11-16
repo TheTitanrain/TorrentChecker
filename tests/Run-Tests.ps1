@@ -19,6 +19,33 @@ function Assert($condition, [string]$message) {
     $script:checks++
 }
 
+$versionCheck = $assembly.GetType('TorrentChecker.frmMain', $true).GetMethod('IsNewerVersion', $staticFlags)
+foreach ($case in @(
+    @{ Candidate = '3.0.15'; Current = '3.0.17'; Expected = $false },
+    @{ Candidate = '3.0.17'; Current = '3.0.17'; Expected = $false },
+    @{ Candidate = '3.0.18'; Current = '3.0.17'; Expected = $true },
+    @{ Candidate = '3.0.9'; Current = '3.0.17'; Expected = $false },
+    @{ Candidate = '3.0.10'; Current = '3.0.9'; Expected = $true },
+    @{ Candidate = '3.1.0'; Current = '3.0.17'; Expected = $true },
+    @{ Candidate = '4.0.0'; Current = '3.9.99'; Expected = $true },
+    @{ Candidate = '2.99.99'; Current = '3.0.17'; Expected = $false },
+    @{ Candidate = '3.0.17.0'; Current = '3.0.17'; Expected = $false },
+    @{ Candidate = '3.0.17'; Current = '3.0.17.0'; Expected = $false },
+    @{ Candidate = '3.0'; Current = '3.0.0.0'; Expected = $false },
+    @{ Candidate = '3.0.0.0'; Current = '3.0'; Expected = $false },
+    @{ Candidate = '3.0.17.1'; Current = '3.0.17'; Expected = $true },
+    @{ Candidate = ' v3.0.18 '; Current = ' V3.0.17 '; Expected = $true },
+    @{ Candidate = 'V3.0.18'; Current = 'v3.0.17'; Expected = $true }
+)) {
+    $actual = $versionCheck.Invoke($null, @($case.Candidate, $case.Current))
+    Assert ($actual -eq $case.Expected) "Version comparison: $($case.Candidate) vs $($case.Current)"
+}
+foreach ($invalid in @($null, '', ' ', 'abc', '3', 'vv3.0.18', 'v', '3.0.18-beta',
+    '3.0.18+metadata', '3.-1.18', '3.0.2147483648', '3.0.18.0.1')) {
+    Assert (-not $versionCheck.Invoke($null, @($invalid, '3.0.17'))) "Reject invalid candidate: $invalid"
+    Assert (-not $versionCheck.Invoke($null, @('3.0.18', $invalid))) "Reject invalid current version: $invalid"
+}
+
 function Invoke-Atom([string]$name, $value) {
     # Preserve returned collections, including empty lists.
     return ,$atom.GetMethod($name, $staticFlags).Invoke($null, @($value))

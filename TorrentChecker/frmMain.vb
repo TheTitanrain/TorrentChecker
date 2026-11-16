@@ -1679,6 +1679,21 @@ Public Class frmMain
         If Not dgvKeyWords.Focused AndAlso dgvKeyWords.CanFocus Then dgvKeyWords.Focus()
     End Sub
 
+    Private Shared Function IsNewerVersion(candidate As String, current As String) As Boolean
+        Dim versions As New List(Of Version)
+        For Each value As String In New String() {candidate, current}
+            If String.IsNullOrWhiteSpace(value) Then Return False
+            value = value.Trim()
+            If value.StartsWith("v", StringComparison.OrdinalIgnoreCase) Then value = value.Substring(1)
+
+            Dim parsed As Version = Nothing
+            If Not Version.TryParse(value, parsed) Then Return False
+            ' Missing build/revision components are equivalent to zero.
+            versions.Add(New Version(parsed.Major, parsed.Minor, Math.Max(0, parsed.Build), Math.Max(0, parsed.Revision)))
+        Next
+        Return versions(0).CompareTo(versions(1)) > 0
+    End Function
+
     Private Async Sub CheckLatestUpdate()
         Try
             If Not AppOptions("check_for_updates") Then Exit Sub
@@ -1691,7 +1706,7 @@ Public Class frmMain
             If HTTPUpdateResult.Success Then
                 If HTTPUpdateResult.Result.Length <> 0 Then
                     Dim tag_name As String = Regex.Match(HTTPUpdateResult.Result, """tag_name"":""(.+?)""", RegexOptions.IgnoreCase, REGEX_TIMEOUT).Groups(1).Value
-                    If tag_name.Length <> 0 AndAlso tag_name <> APP_VERSION Then
+                    If IsNewerVersion(tag_name, APP_VERSION) Then
                         lblShowNewVersion.Visible = True
                         lblShowNewVersion.Text = String.Format("{0}: {1}. {2}: {3}", "Доступна новая версия", tag_name, "Текущая версия", APP_VERSION)
                     Else
