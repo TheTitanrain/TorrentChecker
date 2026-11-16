@@ -200,8 +200,8 @@ Public Module mdlMain
 
     Public AppRepository As New Dictionary(Of String, String) From
     {
-        {"repository_url", "https://github.com/TorrentChecker/TorrentChecker/releases/latest"},
-        {"repository_api", "https://api.github.com/repos/TorrentChecker/TorrentChecker/releases/latest"}
+        {"repository_url", "https://github.com/TheTitanrain/TorrentChecker/releases/latest"},
+        {"repository_api", "https://api.github.com/repos/TheTitanrain/TorrentChecker/releases/latest"}
     }
 
     Public NewPMMenuVisible As New Dictionary(Of Trackers, Boolean) From
@@ -211,7 +211,7 @@ Public Module mdlMain
         }
 
     'constants
-    Public APP_VERSION As String = "3.0.15"
+    Public APP_VERSION As String = "3.0.16"
     Public APP_NAME As String = "TorrentChecker v" & APP_VERSION
     Public HOME_PAGE_URL As String = TrackerBase(Trackers.rutracker) & "/forum/viewtopic.php?t=992695"
     Public REGEX_TIMEOUT As TimeSpan = TimeSpan.FromMilliseconds(1000)
