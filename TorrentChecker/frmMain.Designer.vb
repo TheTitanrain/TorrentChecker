@@ -130,7 +130,7 @@ Partial Class frmMain
         Me.btnConnect.Location = New System.Drawing.Point(6, 27)
         Me.btnConnect.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
         Me.btnConnect.Name = "btnConnect"
-        Me.btnConnect.Size = New System.Drawing.Size(114, 26)
+        Me.btnConnect.Size = New System.Drawing.Size(148, 26)
         Me.btnConnect.TabIndex = 0
         Me.btnConnect.Text = "Проверить сейчас"
         Me.btnConnect.UseVisualStyleBackColor = True
