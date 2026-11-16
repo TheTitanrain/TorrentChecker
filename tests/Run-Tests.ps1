@@ -354,4 +354,13 @@ try {
         [IO.Directory]::Delete($root, $true)
     }
 }
+$provider = New-Object Microsoft.CSharp.CSharpCodeProvider
+try {
+    $compilerOptions = New-Object System.CodeDom.Compiler.CompilerParameters
+    $compilerOptions.GenerateInMemory = $true
+    $compilerOptions.ReferencedAssemblies.AddRange([string[]]@($assembly.Location, 'System.dll', 'System.Net.Http.dll', 'System.Core.dll'))
+    $compiledTests = $provider.CompileAssemblyFromFile($compilerOptions, (Join-Path $PSScriptRoot 'HttpTests.cs'))
+    if ($compiledTests.Errors.HasErrors) { throw ($compiledTests.Errors | Out-String) }
+} finally { $provider.Dispose() }
+$script:checks += [HttpTests]::Run()
 Write-Host "PASS: $script:checks checks ($Configuration)"

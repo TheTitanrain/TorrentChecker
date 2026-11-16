@@ -22,7 +22,6 @@ Public Class clsHTTP
     Private cts As New CancellationTokenSource()
     Private proxyEndpoint As Uri
     Private proxyAuth As NetworkCredential
-    Private ret As New HTTPResult
 
     Public Function Cancel() As CancellationToken
         'Cancel all requests
@@ -61,6 +60,7 @@ Public Class clsHTTP
     End Sub
 
     Public Async Function HTTPGet(ByVal Url As String, Optional ByVal GetData As Dictionary(Of String, String) = Nothing, Optional ByVal asBinary As Boolean = False, Optional ByVal requireSuccessStatus As Boolean = False) As Task(Of HTTPResult)
+        Dim ret As New HTTPResult
         Dim token As CancellationToken = cts.Token
 
         Try
@@ -68,12 +68,10 @@ Public Class clsHTTP
                 Url &= "?"
                 Url &= String.Join("&", GetData.Select(Function(kvp) String.Format("{0}={1}", kvp.Key, Uri.EscapeDataString(kvp.Value))))
             End If
-            With http_request
-                .DefaultRequestHeaders.Clear()
-                .DefaultRequestHeaders.ConnectionClose = True
-                '.DefaultRequestHeaders.Accept.Add(New Headers.MediaTypeWithQualityHeaderValue("text/html"))
-                .DefaultRequestHeaders.Add("User-Agent", APP_NAME)
-                Using Response As HttpResponseMessage = Await http_request.GetAsync(Url, token)
+            Using request As New HttpRequestMessage(HttpMethod.Get, Url)
+                request.Headers.ConnectionClose = True
+                request.Headers.Add("User-Agent", APP_NAME)
+                Using Response As HttpResponseMessage = Await http_request.SendAsync(request, token)
                     If requireSuccessStatus Then Response.EnsureSuccessStatusCode()
                     If asBinary Then
                         ret.ResultB = Await Response.Content.ReadAsByteArrayAsync
@@ -87,7 +85,7 @@ Public Class clsHTTP
                     ret.Success = True
                 End Using
                 Return ret
-            End With
+            End Using
         Catch ex As TaskCanceledException
             If Not token.IsCancellationRequested Then
                 'timed out
@@ -100,22 +98,22 @@ Public Class clsHTTP
     End Function
 
     Public Async Function HTTPPost(ByVal Url As String, ByVal PostData As Dictionary(Of String, String), Optional ByVal asBinary As Boolean = False) As Task(Of HTTPResult)
+        Dim ret As New HTTPResult
         Dim token As CancellationToken = cts.Token
         Dim post_encoding As String = "windows-1251"
         Dim postData_encoded As String = String.Join("&", PostData.Select(Function(kvp) String.Format("{0}={1}", kvp.Key, HttpUtility.UrlEncode(kvp.Value, Encoding.GetEncoding(post_encoding)))))
         Dim postData_bytes As Byte() = Encoding.GetEncoding(post_encoding).GetBytes(postData_encoded)
 
         Try
-            'Using content As FormUrlEncodedContent = New FormUrlEncodedContent(PostData)
             Using content As ByteArrayContent = New ByteArrayContent(postData_bytes)
                 content.Headers.Add("Content-Type", "application/x-www-form-urlencoded")
-                With http_request
-                    .DefaultRequestHeaders.Clear()
-                    .DefaultRequestHeaders.ConnectionClose = True
-                    .DefaultRequestHeaders.ExpectContinue = False
-                    .DefaultRequestHeaders.Accept.Add(New Headers.MediaTypeWithQualityHeaderValue("application/x-www-form-urlencoded"))
-                    .DefaultRequestHeaders.Add("User-Agent", APP_NAME)
-                    Using Response As HttpResponseMessage = Await .PostAsync(Url, content, token)
+                Using request As New HttpRequestMessage(HttpMethod.Post, Url)
+                    request.Content = content
+                    request.Headers.ConnectionClose = True
+                    request.Headers.ExpectContinue = False
+                    request.Headers.Accept.Add(New Headers.MediaTypeWithQualityHeaderValue("application/x-www-form-urlencoded"))
+                    request.Headers.Add("User-Agent", APP_NAME)
+                    Using Response As HttpResponseMessage = Await http_request.SendAsync(request, token)
                         With Response
                             If asBinary Then
                                 ret.ResultB = Await Response.Content.ReadAsByteArrayAsync
@@ -130,7 +128,7 @@ Public Class clsHTTP
                         End With
                     End Using
                     Return ret
-                End With
+                End Using
             End Using
         Catch ex As TaskCanceledException
             If Not token.IsCancellationRequested Then
