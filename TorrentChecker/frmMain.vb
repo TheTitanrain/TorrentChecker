@@ -355,34 +355,23 @@ Public Class frmMain
 
                 If Not IsCurrentScan(generation, cts) Then Return
 
-                'remove outdated stored torrents
+                'Stage history changes until the complete regex pass succeeds.
                 Dim unix_date_time As Long = (DateTime.UtcNow - UNIX_TIME_ORIGIN).TotalSeconds
-                For Each dr As DataRow In dtStoredTorrents.Select(unix_date_time & "-" & Columns.found_unix_datetime.ToString & ">" & TORRENTS_MAX_STORETIME)
-                    dtStoredTorrents.Rows.Remove(dr)
-                Next
-
+                Dim expired_rows As DataRow() = dtStoredTorrents.Select(unix_date_time & "-" & Columns.found_unix_datetime.ToString & ">" & TORRENTS_MAX_STORETIME)
                 'join new and stored torrents for updating and deleting
                 Dim matched_rows As IEnumerable(Of Object) = From new_t In new_torrents_dt.AsEnumerable()
-                                                             Join old_t In dtStoredTorrents.AsEnumerable() On
+                                                             Join old_t In dtStoredTorrents.AsEnumerable().Where(Function(row) Not expired_rows.Contains(row)) On
                                                              new_t.Field(Of Trackers)(Columns.tracker_id.ToString) Equals old_t.Field(Of Trackers)(Columns.tracker_id.ToString) _
                                                              And new_t.Field(Of String)(Columns.topic_id.ToString) Equals old_t.Field(Of String)(Columns.topic_id.ToString) _
                                                              And new_t.Field(Of String)(Columns.torrent_unique_identifier.ToString) Equals old_t.Field(Of String)(Columns.torrent_unique_identifier.ToString)
-                                                             Select new_t, old_t
+                                                             Select new_t, old_t, checked_at = new_t(Columns.found_unix_datetime.ToString)
 
-                For Each dr As Object In matched_rows.ToList()
-                    'update time
-                    dr.old_t(Columns.found_unix_datetime.ToString) = dr.new_t(Columns.found_unix_datetime.ToString)
-                    'remove already found torrents
+                Dim duplicates = matched_rows.ToList()
+                For Each dr As Object In duplicates
                     new_torrents_dt.Rows.Remove(dr.new_t)
                 Next
 
-                'filters
-
-                'filter non-dl torrents [disabled, show all torrents even if they cannot be downloaded]
-                'For Each dr As DataRow In new_torrents_dt.Select(Columns.torrent_dl.ToString & "=''")
-                'new_torrents_dt.Rows.Remove(dr)
-                'Next
-
+                Dim regex_filter_succeeded As Boolean = True
                 'user-defined regex filter
                 If CBool(local_KeyWordsParams("additional_filter")) Then
                     Try
@@ -394,132 +383,150 @@ Public Class frmMain
                         Next
                     Catch ex As Exception
                         If Not IsCurrentScan(generation, cts) Then Return
+                        regex_filter_succeeded = False
                         LogOutput(String.Format("{0} ({1}): {2}", "Ошибка выражения для ручного фильтра", local_KeyWordsParams("additional_filter_text"), GetProperExceptionText(ex)))
                     End Try
                 End If
 
-                'topic_id filter
-                If local_KeyWordsParams("topic_id") <> "" Then
-                    For Each dr As DataRow In new_torrents_dt.Select(Columns.topic_id.ToString & "<>" & local_KeyWordsParams("topic_id"))
-                        new_torrents_dt.Rows.Remove(dr)
+                If regex_filter_succeeded Then
+                    For Each dr As DataRow In expired_rows
+                        dtStoredTorrents.Rows.Remove(dr)
                     Next
-                End If
-
-                'correcting rows
-                For Each dr As DataRow In new_torrents_dt.Rows
-                    'calculate correct torrent size in bytes
-                    dr(Columns.torrent_size_bytes.ToString) = GetTorrentSizeInBytes(dr(Columns.torrent_size.ToString), GetUniformDimension(dr(Columns.torrent_size_dimension.ToString)))
-                    'combine torrent size and dimension
-                    dr(Columns.torrent_size_dimension.ToString) = If(CStr(dr(Columns.torrent_size_dimension.ToString)) = "",
-                                                                       "",
-                                                                       dr(Columns.torrent_size.ToString) & " " & GetUniformDimension(dr(Columns.torrent_size_dimension.ToString)))
-                    'set current datetime according to timezone
-                    dr(Columns.found_datetime.ToString) = (UNIX_TIME_ORIGIN.AddSeconds(dr(Columns.found_unix_datetime.ToString)) + DateTimeOffset.Now.Offset).ToString(DATETIME_FORMAT)
-                    'set keyword_id
-                    dr(Columns.keyword_id.ToString) = params_idx
-                    dr(Columns.marked_as_new.ToString) = True
-                Next
-
-                'torrent size filter (min)
-                If local_KeyWordsParams("torrent_min_size") <> "0" Then
-                    For Each dr As DataRow In new_torrents_dt.Select(Columns.torrent_size_bytes.ToString & "<" & CDbl(local_KeyWordsParams("torrent_min_size")) * 1024 ^ 3)
-                        new_torrents_dt.Rows.Remove(dr)
-                    Next
-                End If
-                'torrent size filter (max)
-                If local_KeyWordsParams("torrent_max_size") <> "0" Then
-                    For Each dr As DataRow In new_torrents_dt.Select(Columns.torrent_size_bytes.ToString & ">" & CDbl(local_KeyWordsParams("torrent_max_size")) * 1024 ^ 3)
-                        new_torrents_dt.Rows.Remove(dr)
-                    Next
-                End If
-
-                'remove more unnecessary column
-                If new_torrents_dt.Columns.Contains(Columns.torrent_size.ToString) Then
-                    new_torrents_dt.Columns.Remove(Columns.torrent_size.ToString)
-                End If
-
-                If KeyWordsParams.ContainsKey(params_idx) Then 'key still exists?
-                    Dim kw_found_rows As Integer = 0
-                    For Each dr As DataRow In dtFoundTorrents.Select(Columns.keyword_id.ToString & "=" & params_idx)
-                        'set current datetime according to timezone for existing torrents
-                        Dim current_datetime As String = (UNIX_TIME_ORIGIN.AddSeconds(dr(Columns.found_unix_datetime.ToString)) + DateTimeOffset.Now.Offset).ToString(DATETIME_FORMAT)
-                        If dr(Columns.found_datetime.ToString) <> current_datetime Then
-                            dr(Columns.found_datetime.ToString) = current_datetime
-                        End If
-                        kw_found_rows += 1
+                    For Each dr As Object In duplicates
+                        dr.old_t(Columns.found_unix_datetime.ToString) = dr.checked_at
                     Next
 
-                    If new_torrents_dt.Rows.Count > 0 Then
-                        'new torrents found, check uniqueness
-                        If kw_found_rows = 0 AndAlso CBool(KeyWordsParams(params_idx)("uniqueness")) Then
-                            Dim dr_first As DataRow = new_torrents_dt.Copy.AsEnumerable.First
-                            new_torrents_dt.Clear()
-                            new_torrents_dt.ImportRow(dr_first)
-                        ElseIf kw_found_rows <> 0 AndAlso CBool(KeyWordsParams(params_idx)("uniqueness")) Then
-                            new_torrents_dt.Clear()
-                        End If
+                    'filters
+
+                    'filter non-dl torrents [disabled, show all torrents even if they cannot be downloaded]
+                    'For Each dr As DataRow In new_torrents_dt.Select(Columns.torrent_dl.ToString & "=''")
+                    'new_torrents_dt.Rows.Remove(dr)
+                    'Next
+
+                    'topic_id filter
+                    If local_KeyWordsParams("topic_id") <> "" Then
+                        For Each dr As DataRow In new_torrents_dt.Select(Columns.topic_id.ToString & "<>" & local_KeyWordsParams("topic_id"))
+                            new_torrents_dt.Rows.Remove(dr)
+                        Next
                     End If
 
-                    If new_torrents_dt.Rows.Count > 0 Then
-                        'dtFoundTorrents.Merge(new_torrents_dt)
-                        For Each dr As DataRow In new_torrents_dt.Rows
-                            'using ImportRow instead of Merge saves row selection
-                            dtFoundTorrents.ImportRow(dr)
+                    'correcting rows
+                    For Each dr As DataRow In new_torrents_dt.Rows
+                        'calculate correct torrent size in bytes
+                        dr(Columns.torrent_size_bytes.ToString) = GetTorrentSizeInBytes(dr(Columns.torrent_size.ToString), GetUniformDimension(dr(Columns.torrent_size_dimension.ToString)))
+                        'combine torrent size and dimension
+                        dr(Columns.torrent_size_dimension.ToString) = If(CStr(dr(Columns.torrent_size_dimension.ToString)) = "",
+                                                                           "",
+                                                                           dr(Columns.torrent_size.ToString) & " " & GetUniformDimension(dr(Columns.torrent_size_dimension.ToString)))
+                        'set current datetime according to timezone
+                        dr(Columns.found_datetime.ToString) = (UNIX_TIME_ORIGIN.AddSeconds(dr(Columns.found_unix_datetime.ToString)) + DateTimeOffset.Now.Offset).ToString(DATETIME_FORMAT)
+                        'set keyword_id
+                        dr(Columns.keyword_id.ToString) = params_idx
+                        dr(Columns.marked_as_new.ToString) = True
+                    Next
+
+                    'torrent size filter (min)
+                    If local_KeyWordsParams("torrent_min_size") <> "0" Then
+                        For Each dr As DataRow In new_torrents_dt.Select(Columns.torrent_size_bytes.ToString & "<" & CDbl(local_KeyWordsParams("torrent_min_size")) * 1024 ^ 3)
+                            new_torrents_dt.Rows.Remove(dr)
+                        Next
+                    End If
+                    'torrent size filter (max)
+                    If local_KeyWordsParams("torrent_max_size") <> "0" Then
+                        For Each dr As DataRow In new_torrents_dt.Select(Columns.torrent_size_bytes.ToString & ">" & CDbl(local_KeyWordsParams("torrent_max_size")) * 1024 ^ 3)
+                            new_torrents_dt.Rows.Remove(dr)
+                        Next
+                    End If
+
+                    'remove more unnecessary column
+                    If new_torrents_dt.Columns.Contains(Columns.torrent_size.ToString) Then
+                        new_torrents_dt.Columns.Remove(Columns.torrent_size.ToString)
+                    End If
+
+                    If KeyWordsParams.ContainsKey(params_idx) Then 'key still exists?
+                        Dim kw_found_rows As Integer = 0
+                        For Each dr As DataRow In dtFoundTorrents.Select(Columns.keyword_id.ToString & "=" & params_idx)
+                            'set current datetime according to timezone for existing torrents
+                            Dim current_datetime As String = (UNIX_TIME_ORIGIN.AddSeconds(dr(Columns.found_unix_datetime.ToString)) + DateTimeOffset.Now.Offset).ToString(DATETIME_FORMAT)
+                            If dr(Columns.found_datetime.ToString) <> current_datetime Then
+                                dr(Columns.found_datetime.ToString) = current_datetime
+                            End If
                             kw_found_rows += 1
                         Next
 
-                        'delete last N results
-                        If kw_found_rows - TORRENTS_MAX_RESULTS > 0 Then
-                            For Each dr As DataRow In dtFoundTorrents.Select(Columns.keyword_id.ToString & "=" & params_idx, Columns.found_unix_datetime.ToString).Take(kw_found_rows - TORRENTS_MAX_RESULTS)
-                                dtFoundTorrents.Rows.Remove(dr)
-                            Next
+                        If new_torrents_dt.Rows.Count > 0 Then
+                            'new torrents found, check uniqueness
+                            If kw_found_rows = 0 AndAlso CBool(KeyWordsParams(params_idx)("uniqueness")) Then
+                                Dim dr_first As DataRow = new_torrents_dt.Copy.AsEnumerable.First
+                                new_torrents_dt.Clear()
+                                new_torrents_dt.ImportRow(dr_first)
+                            ElseIf kw_found_rows <> 0 AndAlso CBool(KeyWordsParams(params_idx)("uniqueness")) Then
+                                new_torrents_dt.Clear()
+                            End If
                         End If
 
-                        dtStoredTorrents.Merge(new_torrents_dt, True, MissingSchemaAction.Ignore)
+                        If new_torrents_dt.Rows.Count > 0 Then
+                            'dtFoundTorrents.Merge(new_torrents_dt)
+                            For Each dr As DataRow In new_torrents_dt.Rows
+                                'using ImportRow instead of Merge saves row selection
+                                dtFoundTorrents.ImportRow(dr)
+                                kw_found_rows += 1
+                            Next
 
-                        Dim cnt_new As Integer = dtFoundTorrents.Compute("COUNT(keyword_id)", String.Format("{0}={1} AND {2}=TRUE", Columns.keyword_id.ToString, params_idx, Columns.marked_as_new.ToString))
-                        KeyWordsParams(params_idx)("count_of_new") = CStr(cnt_new)
-
-                        ShowCountOfNewTorrents(params_idx)
-                        Dim tray_message As String = String.Format("Метка: {0}{1}Новых: {2}{1}Всего непрочитанных: {3}{1}Последний найденный: {4}",
-                                                                   KeyWordsParams(params_idx)("label"),
-                                                                   vbCrLf,
-                                                                   Math.Min(new_torrents_dt.Rows.Count, TORRENTS_MAX_RESULTS),
-                                                                   KeyWordsParams(params_idx)("count_of_new"),
-                                                                   (new_torrents_dt.Copy.AsEnumerable.First)(Columns.topic_name.ToString))
-                        EnableTrayBlinking("Найдены новые торренты!", tray_message)
-                    End If
-                End If
-
-                'download the torrent-file
-                If KeyWordsParams.ContainsKey(params_idx) AndAlso CBool(KeyWordsParams(params_idx)("send_to_client")) Then
-                    For Each dr As DataRow In new_torrents_dt.Select(Columns.torrent_dl.ToString & "<>''")
-                        Dim tracker_id As Trackers = dr(Columns.tracker_id.ToString)
-                        tracker_name = TrackerParams(tracker_id)("tracker_name")
-                        Try
-                            If KeyWordsParams.ContainsKey(params_idx) AndAlso CBool(KeyWordsParams(params_idx)("send_to_client")) Then 'user can change/delete the option/keyword at any time
-                                Dim download As String = CStr(dr(Columns.torrent_dl.ToString))
-                                If tracker_id = Trackers.rutracker Then
-                                    ScanOpenMagnet(download)
-                                    Continue For
-                                End If
-                                Dim command_line As String = KeyWordsParams(params_idx)("client_command_line")
-                                HTTPResult = Await HTTP.HTTPGet(TrackerParams(tracker_id)("download_url") & download, Nothing, True)
-                                If Not IsCurrentScan(generation, cts) Then Return
-
-                                If HTTPResult.Success Then
-                                    ProcessTorrentDownload(HTTPResult, tracker_id.ToString,
-                                        Sub(body) SaveTorrent(body, command_line, tracker_name),
-                                        Sub(message, body) LogOutput(message, True, body))
-                                Else
-                                    Exit For
-                                End If
+                            'delete last N results
+                            If kw_found_rows - TORRENTS_MAX_RESULTS > 0 Then
+                                For Each dr As DataRow In dtFoundTorrents.Select(Columns.keyword_id.ToString & "=" & params_idx, Columns.found_unix_datetime.ToString).Take(kw_found_rows - TORRENTS_MAX_RESULTS)
+                                    dtFoundTorrents.Rows.Remove(dr)
+                                Next
                             End If
-                        Catch ex As Exception
-                            If Not IsCurrentScan(generation, cts) Then Return
-                            LogOutput(String.Format("{0} ({1}): {2}", "Ошибка передачи раздачи", tracker_name, GetProperExceptionText(ex)))
-                        End Try
-                    Next
+
+                            dtStoredTorrents.Merge(new_torrents_dt, True, MissingSchemaAction.Ignore)
+
+                            Dim cnt_new As Integer = dtFoundTorrents.Compute("COUNT(keyword_id)", String.Format("{0}={1} AND {2}=TRUE", Columns.keyword_id.ToString, params_idx, Columns.marked_as_new.ToString))
+                            KeyWordsParams(params_idx)("count_of_new") = CStr(cnt_new)
+
+                            ShowCountOfNewTorrents(params_idx)
+                            Dim tray_message As String = String.Format("Метка: {0}{1}Новых: {2}{1}Всего непрочитанных: {3}{1}Последний найденный: {4}",
+                                                                       KeyWordsParams(params_idx)("label"),
+                                                                       vbCrLf,
+                                                                       Math.Min(new_torrents_dt.Rows.Count, TORRENTS_MAX_RESULTS),
+                                                                       KeyWordsParams(params_idx)("count_of_new"),
+                                                                       (new_torrents_dt.Copy.AsEnumerable.First)(Columns.topic_name.ToString))
+                            EnableTrayBlinking("Найдены новые торренты!", tray_message)
+                        End If
+                    End If
+
+                    'download the torrent-file
+                    If KeyWordsParams.ContainsKey(params_idx) AndAlso CBool(KeyWordsParams(params_idx)("send_to_client")) Then
+                        For Each dr As DataRow In new_torrents_dt.Select(Columns.torrent_dl.ToString & "<>''")
+                            Dim tracker_id As Trackers = dr(Columns.tracker_id.ToString)
+                            tracker_name = TrackerParams(tracker_id)("tracker_name")
+                            Try
+                                If KeyWordsParams.ContainsKey(params_idx) AndAlso CBool(KeyWordsParams(params_idx)("send_to_client")) Then 'user can change/delete the option/keyword at any time
+                                    Dim download As String = CStr(dr(Columns.torrent_dl.ToString))
+                                    If tracker_id = Trackers.rutracker Then
+                                        ScanOpenMagnet(download)
+                                        Continue For
+                                    End If
+                                    Dim command_line As String = KeyWordsParams(params_idx)("client_command_line")
+                                    HTTPResult = Await HTTP.HTTPGet(TrackerParams(tracker_id)("download_url") & download, Nothing, True)
+                                    If Not IsCurrentScan(generation, cts) Then Return
+
+                                    If HTTPResult.Success Then
+                                        ProcessTorrentDownload(HTTPResult, tracker_id.ToString,
+                                            Sub(body) SaveTorrent(body, command_line, tracker_name),
+                                            Sub(message, body) LogOutput(message, True, body))
+                                    Else
+                                        Exit For
+                                    End If
+                                End If
+                            Catch ex As Exception
+                                If Not IsCurrentScan(generation, cts) Then Return
+                                LogOutput(String.Format("{0} ({1}): {2}", "Ошибка передачи раздачи", tracker_name, GetProperExceptionText(ex)))
+                            End Try
+                        Next
+                    End If
+
                 End If
 
                 'clear status image and do correct increment method

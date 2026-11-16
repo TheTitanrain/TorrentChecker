@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
@@ -44,11 +44,20 @@ public static class ScanTests
         }
         public void Complete(int index, string id)
         {
+            CompleteTitles(index, new[]{id}, new[]{"Scan " + id});
+        }
+        public void CompleteTitles(int index, string[] ids, string[] titles)
+        {
+            var entries = new System.Text.StringBuilder();
+            for (int i = 0; i < ids.Length; i++)
+                entries.Append("<entry><id>https://rutracker.org/t/" + ids[i] + "</id><title>" +
+                    System.Security.SecurityElement.Escape(titles[i]) + " [1 GB]</title>" +
+                    "<link rel='enclosure' href='magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567'/></entry>");
             Calls[index].SetResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(
-                "<feed xmlns='http://www.w3.org/2005/Atom'><entry><id>https://rutracker.org/t/" + id +
-                "</id><title>Scan " + id + " [1 GB]</title><link rel='enclosure' href='magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567'/></entry></feed>") });
+                "<feed xmlns='http://www.w3.org/2005/Atom'>" + entries + "</feed>") });
         }
     }
+
     sealed class Fixture : IDisposable
     {
         readonly Dictionary<FieldInfo, object> originals = new Dictionary<FieldInfo, object>();
@@ -103,6 +112,8 @@ public static class ScanTests
                 Invoke(Form, "InitializeKeyWordsView");
                 for (int i = 1; i <= ruleCount; i++) Grid.Rows.Add(null, "Rule " + i);
                 ((NotifyIcon)Get(Form, "trayIcon")).Visible = false;
+                // RichTextBox needs its native handle to retain AppendText without showing the form.
+                var logHandle = ((RichTextBox)Get(Form, "rtbLogTextBox")).Handle;
                 var http = Get(Form, "HTTP");
                 var field = typeof(clsHTTP).GetField("http_request", Instance);
                 ((HttpClient)field.GetValue(http)).Dispose();
@@ -167,6 +178,55 @@ public static class ScanTests
             f.Handler.Complete(1, "404"); Pump(() => f.Handler.Calls.Count == 3);
             f.Handler.Complete(2, "405"); Finish(resumed);
             Check(f.Timer.Enabled && f.Saves == 2 && f.Sends == 2 && mdlMain.dtFoundTorrents.Rows.Count == 2, "resumed scan completes remaining rules and deduplicates history");
+        }
+        foreach (string mode in new[]{"syntax", "timeout", "valid"})
+        using (var f = new Fixture(2))
+        {
+            // Seed real published history before introducing a saved rule's invalid filter.
+            var seed = f.Start(); f.Handler.CompleteTitles(0, new[]{"501"}, new[]{new string('a', 10000) + "!"});
+            Pump(() => f.Handler.Calls.Count == 2); f.Handler.Complete(1, "502"); Finish(seed);
+            var existing = mdlMain.dtFoundTorrents.Select("keyword_id=1")[0];
+            existing["found_datetime"] = "unchanged existing display";
+            var original = existing.ItemArray;
+            var stored = mdlMain.dtStoredTorrents.Select("topic_id='501'")[0];
+            stored["found_unix_datetime"] = Convert.ToInt64(stored["found_unix_datetime"]) - 60;
+            var storedOriginal = stored.ItemArray;
+            mdlMain.KeyWordsParams[1]["additional_filter"] = "True";
+            mdlMain.KeyWordsParams[1]["additional_filter_text"] = mode == "syntax" ? "[" : "^(a+)+$";
+            f.Saves = f.Sends = 0;
+            var timeout = mdlMain.REGEX_TIMEOUT;
+            try
+            {
+                mdlMain.REGEX_TIMEOUT = TimeSpan.FromMilliseconds(20);
+                var task = f.Start();
+                // First title matches; the second must invalidate that earlier match on timeout.
+                f.Handler.CompleteTitles(2, new[]{"601", "602", "501"}, new[]{"aaa", mode == "timeout" ? new string('a', 10000) + "!" : "no match", new string('a', 10000) + "!"});
+                Pump(() => f.Handler.Calls.Count == 4 || task.IsCompleted);
+                Check(!task.IsCompleted && f.Handler.Calls.Count == 4, mode + ": advances to next rule");
+                Check(f.Grid.Rows[1].Cells["kw_img"].Value == null, mode + ": clears failed rule icon");
+                if (mode == "syntax" || mode == "timeout")
+                {
+                    Check(f.Sends == 0 && mdlMain.dtFoundTorrents.Rows.Count == 2 && mdlMain.dtStoredTorrents.Rows.Count == 2, mode + ": no partial publication, history or dispatch");
+                    Check(System.Linq.Enumerable.SequenceEqual(original, existing.ItemArray), mode + ": existing result unchanged");
+                    Check(System.Linq.Enumerable.SequenceEqual(storedOriginal, stored.ItemArray), mode + ": existing history unchanged");
+                    Check(mdlMain.KeyWordsParams[1]["count_of_new"] == "1", mode + ": existing unread count unchanged");
+                    Check(f.Log.Contains("Ошибка выражения для ручного фильтра"), mode + ": filter error logged: " + f.Log);
+                }
+                f.Handler.Complete(3, "603"); Finish(task);
+                Check(mdlMain.dtFoundTorrents.Select("topic_id='603' AND keyword_id=2").Length == 1 && f.Saves == 1 && f.Timer.Enabled, mode + ": next rule publishes and scan finalizes");
+                Check(f.Sends == (mode == "valid" ? 2 : 1), mode + ": only approved results dispatched");
+                Check(mdlMain.dtFoundTorrents.Select("topic_id='601'").Length == (mode == "valid" ? 1 : 0) &&
+                    mdlMain.dtStoredTorrents.Select("topic_id='601'").Length == (mode == "valid" ? 1 : 0) &&
+                    mdlMain.dtFoundTorrents.Select("topic_id='602'").Length == 0 && mdlMain.dtStoredTorrents.Select("topic_id='602'").Length == 0,
+                    mode + ": filter result is atomic and valid pattern retains its match");
+                Check(f.Grid.Rows[2].Cells["kw_img"].Value == null, mode + ": next rule clears icon");
+                if (mode == "valid")
+                {
+                    Check(f.Log == "", "valid pattern logs no error, stored pathological duplicate is not matched");
+                    Check(Convert.ToInt64(stored["found_unix_datetime"]) > Convert.ToInt64(storedOriginal[stored.Table.Columns["found_unix_datetime"].Ordinal]), "valid filter refreshes duplicate history even when its title would not match");
+                }
+            }
+            finally { mdlMain.REGEX_TIMEOUT = timeout; }
         }
         return checks;
     }
