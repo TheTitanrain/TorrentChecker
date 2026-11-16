@@ -39,7 +39,7 @@ Friend Module clsCredentialStore
     Private Sub CredFree(buffer As IntPtr)
     End Sub
 
-    Friend Function ReadCredential(target As String) As Net.NetworkCredential
+    Friend Function ReadCredential(target As String, Optional endpoint As String = Nothing) As Net.NetworkCredential
         Dim buffer As IntPtr
         If Not CredRead(target, GenericCredential, 0, buffer) Then
             Dim code = Marshal.GetLastWin32Error()
@@ -48,6 +48,9 @@ Friend Module clsCredentialStore
         End If
         Try
             Dim value = Marshal.PtrToStructure(Of Credential)(buffer)
+            If endpoint IsNot Nothing AndAlso Not String.Equals(value.Comment, endpoint, StringComparison.Ordinal) Then
+                Return New Net.NetworkCredential()
+            End If
             Dim password = If(value.BlobSize = 0, "", Marshal.PtrToStringUni(value.Blob, value.BlobSize \ 2))
             Return New Net.NetworkCredential(value.UserName, password)
         Finally
@@ -55,12 +58,12 @@ Friend Module clsCredentialStore
         End Try
     End Function
 
-    Friend Sub WriteCredential(target As String, userName As String, password As String)
+    Friend Sub WriteCredential(target As String, userName As String, password As String, Optional endpoint As String = Nothing)
         If String.IsNullOrEmpty(userName) AndAlso String.IsNullOrEmpty(password) Then Return
         Dim buffer = Marshal.StringToCoTaskMemUni(If(password, ""))
         Try
             Dim value As New Credential With {
-                .Kind = GenericCredential, .Target = target, .UserName = If(userName, ""),
+                .Kind = GenericCredential, .Target = target, .UserName = If(userName, ""), .Comment = endpoint,
                 .Blob = buffer, .BlobSize = Encoding.Unicode.GetByteCount(If(password, "")),
                 .Persist = PersistLocalMachine
             }

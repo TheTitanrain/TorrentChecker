@@ -40,12 +40,7 @@ Public Class frmKeyWord
 
         Try
             HTTP.Cancel()
-            If ProxySettings("use_proxy") Then
-                HTTP.UseProxy = True
-                HTTP.SetProxy(ProxySettings)
-            Else
-                HTTP.UseProxy = False
-            End If
+            HTTP.ConfigureProxy(ProxySettings, ProxyCredential)
             HTTPResult = Await HTTP.HTTPPost(TrackerParams(tracker_id)("login_url"), TrackerParams(tracker_id)("credentials"))
             If HTTPResult.Success Then
                 logged_result = CheckLogged(HTTPResult.Result, tracker_id)

@@ -20,9 +20,8 @@ Public Class clsHTTP
     Private http_handler As New HttpClientHandler With {.CookieContainer = cookie_container, .UseProxy = False}
     Private http_request As New HttpClient(http_handler) With {.Timeout = TimeSpan.FromSeconds(http_timeout_sec)}
     Private cts As New CancellationTokenSource()
-    Private web_proxy As New WebProxy
-    Private proxy_builder As New UriBuilder
-    Private proxy_credentials As New NetworkCredential
+    Private proxyEndpoint As Uri
+    Private proxyAuth As NetworkCredential
     Private ret As New HTTPResult
 
     Public Function Cancel() As CancellationToken
@@ -39,29 +38,27 @@ Public Class clsHTTP
         Next
     End Sub
 
-    Public Sub SetProxy(ByVal ProxyParams As Dictionary(Of String, Object), Optional ByVal username As String = "", Optional ByVal password As String = "")
-        proxy_builder.Host = CStr(ProxyParams("proxy_address"))
-        proxy_builder.Port = CInt(ProxyParams("proxy_port"))
-        proxy_credentials.UserName = username
-        proxy_credentials.Password = password
-        web_proxy.Address = proxy_builder.Uri
-        web_proxy.Credentials = proxy_credentials
-    End Sub
+    Friend Sub ConfigureProxy(settings As Dictionary(Of String, Object), credentials As NetworkCredential)
+        Dim endpoint As Uri = Nothing
+        Dim auth As NetworkCredential = Nothing
+        If CBool(settings("use_proxy")) Then
+            endpoint = clsSettingsStore.ProxyEndpoint(settings)
+            If endpoint Is Nothing Then Throw New ArgumentException("Некорректный адрес или порт прокси.")
+            If credentials.UserName.Length <> 0 OrElse credentials.Password.Length <> 0 Then auth = credentials
+        End If
+        If Object.Equals(proxyEndpoint, endpoint) AndAlso Object.ReferenceEquals(proxyAuth, auth) Then Return
 
-    Public WriteOnly Property UseProxy As Boolean
-        Set(value As Boolean)
-            If http_handler.UseProxy = value Then Exit Property
-            Cancel()
-            http_request.Dispose()
-            http_handler.Dispose()
-            http_handler = New HttpClientHandler With {.CookieContainer = cookie_container, .UseProxy = value}
-            http_request = New HttpClient(http_handler) With {.Timeout = TimeSpan.FromSeconds(http_timeout_sec)}
-            If value Then
-                http_handler.Proxy = web_proxy
-                http_handler.PreAuthenticate = True
-            End If
-        End Set
-    End Property
+        Cancel()
+        http_request.Dispose()
+        http_handler = New HttpClientHandler With {.CookieContainer = cookie_container, .UseProxy = endpoint IsNot Nothing}
+        If endpoint IsNot Nothing Then
+            http_handler.Proxy = New WebProxy(endpoint) With {.Credentials = auth}
+            http_handler.PreAuthenticate = True
+        End If
+        http_request = New HttpClient(http_handler) With {.Timeout = TimeSpan.FromSeconds(http_timeout_sec)}
+        proxyEndpoint = endpoint
+        proxyAuth = auth
+    End Sub
 
     Public Async Function HTTPGet(ByVal Url As String, Optional ByVal GetData As Dictionary(Of String, String) = Nothing, Optional ByVal asBinary As Boolean = False, Optional ByVal requireSuccessStatus As Boolean = False) As Task(Of HTTPResult)
         Dim token As CancellationToken = cts.Token

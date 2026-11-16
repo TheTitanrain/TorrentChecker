@@ -49,6 +49,9 @@ Friend NotInheritable Class clsSettingsStore
         data("dtFoundTorrents") = DecodeHistory(DirectCast(history("found"), Dictionary(Of String, Object)), True)
         data("dtStoredTorrents") = DecodeHistory(DirectCast(history("stored"), Dictionary(Of String, Object)), False)
 
+        Dim endpoint = ProxyEndpoint(DirectCast(data("proxy"), Dictionary(Of String, Object)))
+        data("proxyCredential") = If(endpoint Is Nothing, New NetworkCredential(),
+                                    ReadCredential(Target(credentialId, "proxy"), endpoint.AbsoluteUri))
         AddTrackerCredentials(data, Trackers.rutracker, "login_username", "login_password")
         AddTrackerCredentials(data, Trackers.kinozal, "username", "password")
         Return data
@@ -87,6 +90,7 @@ Friend NotInheritable Class clsSettingsStore
         wire.Add("credentialId", nextCredentials)
 
         Dim settingsJson = serializer.Serialize(wire)
+        Dim proxy = ProxyEndpoint(DirectCast(wire("proxy"), Dictionary(Of String, Object)))
         Dim history = New With {
             .found = EncodeHistory(HistoryTable(data, "dtFoundTorrents", True)),
             .stored = EncodeHistory(HistoryTable(data, "dtStoredTorrents", False))
@@ -103,7 +107,7 @@ Friend NotInheritable Class clsSettingsStore
 
         Try
             WriteFile(HistoryPath(nextHistory), historyJson, False)
-            If stageCredentials Then SaveCredentials(data, nextCredentials)
+            If stageCredentials Then SaveCredentials(data, nextCredentials, proxy)
             WriteFile(settingsPath, FormatSettings(settingsJson), historyId IsNot Nothing)
         Catch
             DeleteHistory(nextHistory)
@@ -197,9 +201,14 @@ Friend NotInheritable Class clsSettingsStore
         data(service & "_credentials") = fields
     End Sub
 
-    Private Sub SaveCredentials(data As Dictionary(Of String, Object), id As String)
+    Private Sub SaveCredentials(data As Dictionary(Of String, Object), id As String, proxy As Uri)
         SaveTracker(data, id, "rutracker", "login_username", "login_password")
         SaveTracker(data, id, "kinozal", "username", "password")
+        Dim value As NetworkCredential = If(data.ContainsKey("proxyCredential"), DirectCast(data("proxyCredential"), NetworkCredential), Nothing)
+        If value IsNot Nothing AndAlso (value.UserName.Length <> 0 OrElse value.Password.Length <> 0) Then
+            If proxy Is Nothing Then Throw New InvalidDataException("Некорректный адрес или порт прокси.")
+            WriteCredential(Target(id, "proxy"), value.UserName, value.Password, proxy.AbsoluteUri)
+        End If
     End Sub
 
     Private Sub SaveTracker(data As Dictionary(Of String, Object), id As String, service As String, userKey As String, passwordKey As String)
@@ -215,7 +224,7 @@ Friend NotInheritable Class clsSettingsStore
 
     Private Sub DeleteCredentials(id As String)
         If id Is Nothing Then Return
-        For Each service In {"rutracker", "kinozal"}
+        For Each service In {"rutracker", "kinozal", "proxy"}
             Try
                 DeleteCredential(Target(id, service))
             Catch ex As ComponentModel.Win32Exception

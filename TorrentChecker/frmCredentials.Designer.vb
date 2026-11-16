@@ -28,6 +28,10 @@ Partial Class frmCredentials
         Me.Label5 = New System.Windows.Forms.Label()
         Me.txtProxyAddress = New System.Windows.Forms.TextBox()
         Me.chkUseProxy = New System.Windows.Forms.CheckBox()
+        Me.txtProxyLogin = New System.Windows.Forms.TextBox()
+        Me.txtProxyPassword = New System.Windows.Forms.TextBox()
+        Me.lblProxyLogin = New System.Windows.Forms.Label()
+        Me.lblProxyPassword = New System.Windows.Forms.Label()
         Me.btnSave = New System.Windows.Forms.Button()
         Me.btnCancel = New System.Windows.Forms.Button()
         Me.Label1 = New System.Windows.Forms.Label()
@@ -56,9 +60,13 @@ Partial Class frmCredentials
         Me.grpProxyBox.Controls.Add(Me.Label5)
         Me.grpProxyBox.Controls.Add(Me.txtProxyAddress)
         Me.grpProxyBox.Controls.Add(Me.chkUseProxy)
+        Me.grpProxyBox.Controls.Add(Me.txtProxyLogin)
+        Me.grpProxyBox.Controls.Add(Me.txtProxyPassword)
+        Me.grpProxyBox.Controls.Add(Me.lblProxyLogin)
+        Me.grpProxyBox.Controls.Add(Me.lblProxyPassword)
         Me.grpProxyBox.Location = New System.Drawing.Point(12, 122)
         Me.grpProxyBox.Name = "grpProxyBox"
-        Me.grpProxyBox.Size = New System.Drawing.Size(533, 86)
+        Me.grpProxyBox.Size = New System.Drawing.Size(533, 141)
         Me.grpProxyBox.TabIndex = 2
         Me.grpProxyBox.TabStop = False
         Me.grpProxyBox.Text = "Прокси-сервер"
@@ -110,9 +118,31 @@ Partial Class frmCredentials
         Me.chkUseProxy.Text = "Использовать прокси-сервер"
         Me.chkUseProxy.UseVisualStyleBackColor = True
         '
+        'Proxy credentials
+        '
+        Me.lblProxyLogin.AutoSize = True
+        Me.lblProxyLogin.Location = New System.Drawing.Point(11, 77)
+        Me.lblProxyLogin.Text = "Логин:"
+        Me.txtProxyLogin.Enabled = False
+        Me.txtProxyLogin.Location = New System.Drawing.Point(78, 74)
+        Me.txtProxyLogin.MaxLength = 100
+        Me.txtProxyLogin.Name = "txtProxyLogin"
+        Me.txtProxyLogin.Size = New System.Drawing.Size(235, 20)
+        Me.txtProxyLogin.TabIndex = 5
+        Me.lblProxyPassword.AutoSize = True
+        Me.lblProxyPassword.Location = New System.Drawing.Point(11, 103)
+        Me.lblProxyPassword.Text = "Пароль:"
+        Me.txtProxyPassword.Enabled = False
+        Me.txtProxyPassword.Location = New System.Drawing.Point(78, 100)
+        Me.txtProxyPassword.MaxLength = 100
+        Me.txtProxyPassword.Name = "txtProxyPassword"
+        Me.txtProxyPassword.Size = New System.Drawing.Size(235, 20)
+        Me.txtProxyPassword.TabIndex = 6
+        Me.txtProxyPassword.UseSystemPasswordChar = True
+        '
         'btnSave
         '
-        Me.btnSave.Location = New System.Drawing.Point(343, 219)
+        Me.btnSave.Location = New System.Drawing.Point(343, 274)
         Me.btnSave.Name = "btnSave"
         Me.btnSave.Size = New System.Drawing.Size(98, 26)
         Me.btnSave.TabIndex = 4
@@ -121,7 +151,7 @@ Partial Class frmCredentials
         '
         'btnCancel
         '
-        Me.btnCancel.Location = New System.Drawing.Point(447, 219)
+        Me.btnCancel.Location = New System.Drawing.Point(447, 274)
         Me.btnCancel.Name = "btnCancel"
         Me.btnCancel.Size = New System.Drawing.Size(98, 26)
         Me.btnCancel.TabIndex = 5
@@ -262,7 +292,7 @@ Partial Class frmCredentials
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(96.0!, 96.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi
-        Me.ClientSize = New System.Drawing.Size(557, 250)
+        Me.ClientSize = New System.Drawing.Size(557, 305)
         Me.Controls.Add(Me.tbCredentialsControl)
         Me.Controls.Add(Me.btnCancel)
         Me.Controls.Add(Me.btnSave)
@@ -303,6 +333,10 @@ Partial Class frmCredentials
     Friend WithEvents Label6 As System.Windows.Forms.Label
     Friend WithEvents Label5 As System.Windows.Forms.Label
     Friend WithEvents txtProxyAddress As System.Windows.Forms.TextBox
+    Friend WithEvents txtProxyLogin As System.Windows.Forms.TextBox
+    Friend WithEvents txtProxyPassword As System.Windows.Forms.TextBox
+    Friend WithEvents lblProxyLogin As System.Windows.Forms.Label
+    Friend WithEvents lblProxyPassword As System.Windows.Forms.Label
     Friend WithEvents lblRegistration_rt As System.Windows.Forms.Label
     Friend WithEvents lblRegistration_kz As System.Windows.Forms.Label
 End Class

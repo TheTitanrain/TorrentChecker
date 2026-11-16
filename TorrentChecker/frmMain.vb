@@ -200,8 +200,7 @@ Public Class frmMain
 
         Try
             'Cancel an earlier scan and take the token after applying proxy settings.
-            HTTP.UseProxy = CBool(ProxySettings("use_proxy"))
-            If CBool(ProxySettings("use_proxy")) Then HTTP.SetProxy(ProxySettings)
+            HTTP.ConfigureProxy(ProxySettings, ProxyCredential)
             cts = HTTP.Cancel()
 
             'reset time counters
@@ -1359,14 +1358,8 @@ Public Class frmMain
     Private Async Sub DrawCaptcha(tracker_name As String)
         Dim CapHTTPResult As clsHTTP.HTTPResult
 
-        If ProxySettings("use_proxy") Then
-            HTTP.UseProxy = True
-            HTTP.SetProxy(ProxySettings)
-        Else
-            HTTP.UseProxy = False
-        End If
-
         Try
+            HTTP.ConfigureProxy(ProxySettings, ProxyCredential)
             picCaptcha.Image.Dispose()
             picCaptcha.Image = picCaptcha.InitialImage
             CapHTTPResult = Await HTTP.HTTPGet(CaptchaParams("captcha_url"), Nothing, True)
@@ -1404,14 +1397,8 @@ Public Class frmMain
             Exit Sub
         End If
 
-        If ProxySettings("use_proxy") Then
-            HTTP.UseProxy = True
-            HTTP.SetProxy(ProxySettings)
-        Else
-            HTTP.UseProxy = False
-        End If
-
         Try
+            HTTP.ConfigureProxy(ProxySettings, ProxyCredential)
             Select Case tracker_id
                 Case Trackers.rutracker
                     CapPostParams.Add("cap_sid", CaptchaParams("captcha_sid"))
@@ -1698,12 +1685,7 @@ Public Class frmMain
 
             HTTPUpdate.Cancel()
 
-            If ProxySettings("use_proxy") Then
-                HTTPUpdate.UseProxy = True
-                HTTPUpdate.SetProxy(ProxySettings)
-            Else
-                HTTPUpdate.UseProxy = False
-            End If
+            HTTPUpdate.ConfigureProxy(ProxySettings, ProxyCredential)
 
             HTTPUpdateResult = Await HTTPUpdate.HTTPGet(AppRepository("repository_api"))
             If HTTPUpdateResult.Success Then

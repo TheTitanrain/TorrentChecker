@@ -26,6 +26,8 @@
         chkUseProxy.Checked = ProxySettings("use_proxy")
         txtProxyAddress.Text = ProxySettings("proxy_address")
         txtProxyPort.Text = ProxySettings("proxy_port")
+        txtProxyLogin.Text = ProxyCredential.UserName
+        txtProxyPassword.Text = ProxyCredential.Password
 
         txtLogin_rt.Text = TrackerParams(Trackers.rutracker)("credentials")("login_username")
         txtPassword_rt.Text = TrackerParams(Trackers.rutracker)("credentials")("login_password")
@@ -44,7 +46,8 @@
         End Select
     End Sub
     Private Function MakeChecks(proxy As Dictionary(Of String, Object)) As Boolean
-        If chkUseProxy.Checked AndAlso clsSettingsStore.ProxyEndpoint(proxy) Is Nothing Then
+        If (chkUseProxy.Checked OrElse txtProxyLogin.TextLength > 0 OrElse txtProxyPassword.TextLength > 0) AndAlso
+           clsSettingsStore.ProxyEndpoint(proxy) Is Nothing Then
             MsgBox("Некорректный адрес или порт прокси-сервера.", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
             txtProxyAddress.Focus()
             Return False
@@ -110,9 +113,10 @@
     Private Sub btnSave_Click(sender As Object, e As EventArgs) Handles btnSave.Click
         Dim proxy = ProxyFromForm()
         If Not MakeChecks(proxy) Then Exit Sub
+        Dim proxyAuth As New Net.NetworkCredential(txtProxyLogin.Text, txtProxyPassword.Text)
         Dim ru = UpdatedCredential(Trackers.rutracker, "login_username", txtLogin_rt.Text, "login_password", txtPassword_rt.Text)
         Dim kz = UpdatedCredential(Trackers.kinozal, "username", txtLogin_kz.Text, "password", txtPassword_kz.Text)
-        If Not SaveCredentialsAndProxy(proxy, ru, kz) Then Return
+        If Not SaveCredentialsAndProxy(proxy, proxyAuth, ru, kz) Then Return
 
         If TrackerParams(Trackers.rutracker)("credentials")("login_username") <> txtLogin_rt.Text _
             Or TrackerParams(Trackers.rutracker)("credentials")("login_password") <> txtPassword_rt.Text Then
@@ -127,6 +131,7 @@
         End If
 
         ProxySettings = proxy
+        ProxyCredential = proxyAuth
         TrackerParams(Trackers.rutracker)("credentials") = ru
         TrackerParams(Trackers.kinozal)("credentials") = kz
 
@@ -150,6 +155,13 @@
     Private Sub chkUseProxy_CheckedChanged(sender As Object, e As EventArgs) Handles chkUseProxy.CheckedChanged
         txtProxyAddress.Enabled = chkUseProxy.Checked
         txtProxyPort.Enabled = chkUseProxy.Checked
+        txtProxyLogin.Enabled = chkUseProxy.Checked
+        txtProxyPassword.Enabled = chkUseProxy.Checked
+    End Sub
+
+    Private Sub ProxyEndpoint_Changed(sender As Object, e As EventArgs) Handles txtProxyAddress.TextChanged, txtProxyPort.TextChanged
+        txtProxyLogin.Clear()
+        txtProxyPassword.Clear()
     End Sub
 
     Private Sub txtProxyAddress_GotFocus(sender As Object, e As EventArgs) Handles txtProxyAddress.GotFocus

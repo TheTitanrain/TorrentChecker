@@ -107,6 +107,9 @@ foreach ($name in @('frmMain', 'frmKeyWord', 'frmCredentials', 'frmForums', 'frm
         if ($name -eq 'frmMain') {
             $menu = $form.GetType().GetField('openMagnetMenu', $instanceFlags).GetValue($form)
             Assert ($null -ne $menu.Owner) 'Magnet action must be attached to the context menu'
+        } elseif ($name -eq 'frmCredentials') {
+            $passwordBox = $form.Controls.Find('txtProxyPassword', $true)[0]
+            Assert $passwordBox.UseSystemPasswordChar 'Proxy password input must be masked'
         }
     } finally { $form.Dispose() }
 }
@@ -178,6 +181,7 @@ try {
     $user = 'test-' + [char]0x416
     $rtSecret = 'rt-test-secret-' + [char]0x417
     $kzSecret = 'kz-test-secret-' + [char]0x418
+    $proxySecret = 'proxy-test-secret-' + [char]0x419
     $ru = New-Object 'System.Collections.Generic.Dictionary[string,string]'
     $ru.Add('login_username', $user)
     $ru.Add('login_password', $rtSecret)
@@ -250,7 +254,7 @@ try {
     Assert ($data['rutracker_credentials']['login_password'] -ceq $rtSecret -and
             $data['rutracker_credentials']['login_username'] -ceq $user -and $data['rutracker_credentials'].ContainsKey('login')) 'Restore Unicode RuTracker credentials and protocol defaults'
     Assert ($data['kinozal_credentials']['password'] -ceq $kzSecret -and $data['kinozal_credentials'].ContainsKey('wact')) 'Restore Kinozal password and protocol defaults'
-    Assert ($data['proxy']['proxy_address'] -eq 'localhost' -and $data['proxy']['proxy_port'] -eq '3128') 'Migrate legacy proxy address and port'
+    Assert ($data['proxy']['proxy_port'] -eq '3128' -and $data['proxyCredential'].Password -eq '') 'Migrate unauthenticated legacy proxy'
     $row = $data['dtFoundTorrents'].Rows[0]
     Assert ($row['keyword_id'] -eq 7 -and $row['found_unix_datetime'] -eq $time -and $row['tracker_id'] -eq 1 -and
             $row['marked_as_new'] -eq $true -and $row['torrent_size_bytes'] -eq 18.125 -and
@@ -259,7 +263,7 @@ try {
     Assert ($data['dtFoundTorrents'].Rows[1]['keyword_id'] -eq 2 -and
             $data['dtFoundTorrents'].Rows[1]['topic_name'] -eq 'Second rule result') 'Keep results associated with both reordered rules'
 
-    $data['rutracker_credentials']['login_password'] = 'pending-test-password'
+    $data['proxyCredential'] = (New-Object Net.NetworkCredential($user, $proxySecret)).PSObject.BaseObject
     $beforeSave = [IO.File]::ReadAllText($settingsPath)
     $blocked = [IO.File]::Open($settingsPath, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
     try {
@@ -272,18 +276,20 @@ try {
     } finally { $blocked.Dispose() }
     $reloaded = Invoke-Store (New-Store $root) Load @($unexpected)
     Assert ($reloaded['rutracker_credentials']['login_password'] -ceq $rtSecret -and
-            [IO.File]::ReadAllText($settingsPath) -ceq $beforeSave -and
+            $reloaded['proxyCredential'].Password -eq '' -and [IO.File]::ReadAllText($settingsPath) -ceq $beforeSave -and
             $reloaded['dtFoundTorrents'].Rows[0]['keyword_id'] -eq 7 -and
             @(Get-ChildItem -Path $root -Filter 'history-*.json').Count -eq 1) 'Failed save retains prior settings, history and vault records'
-    $null = Invoke-Store $store Save @($reloaded, $true)
+    $null = Invoke-Store $store Save @($data, $true)
     $rawJson = Get-Content -LiteralPath $settingsPath -Raw
     $manifest = $rawJson | ConvertFrom-Json
     $historyPath = Join-Path $root ('history-' + $manifest.historyId + '.json')
-    foreach ($secret in @($rtSecret, $kzSecret)) {
+    foreach ($secret in @($rtSecret, $kzSecret, $proxySecret)) {
         Assert (-not $rawJson.Contains($secret) -and -not [IO.File]::ReadAllText($historyPath).Contains($secret)) 'Secrets are absent from both JSON files'
     }
     Assert ($rawJson.Contains([Environment]::NewLine) -and -not $rawJson.Contains('dtFoundTorrents')) 'Settings are formatted and omit history tables'
     $reloaded = Invoke-Store (New-Store $root) Load @($unexpected)
+    Assert ($reloaded['proxyCredential'].Password -ceq $proxySecret -and
+            $reloaded['proxyCredential'].UserName -ceq $user) 'Restore proxy credentials from Windows vault'
 
     $reloaded['dtFoundTorrents'].Rows[0]['topic_name'] = 'Updated test title'
     $null = Invoke-Store $store Save @($reloaded, $false)
@@ -292,10 +298,14 @@ try {
     $reloaded = Invoke-Store (New-Store $root) Load @($unexpected)
     Assert ($ordinarySave.credentialId -eq $manifest.credentialId -and $ordinarySave.historyId -ne $manifest.historyId -and
             $reloaded['dtFoundTorrents'].Rows[0]['topic_name'] -eq 'Updated test title' -and
-            $reloaded['rutracker_credentials']['login_password'] -ceq $rtSecret) 'Ordinary history save retains existing vault entries'
+            $reloaded['proxyCredential'].Password -ceq $proxySecret) 'Ordinary history save retains existing vault entries'
     $manifest = $ordinarySave
     $historyPath = Join-Path $root ('history-' + $manifest.historyId + '.json')
 
+    $otherEndpoint = $rawJson.Replace('"3128"', '"3129"')
+    [IO.File]::WriteAllText($settingsPath, $otherEndpoint)
+    $changed = Invoke-Store (New-Store $root) Load @($unexpected)
+    Assert ($changed['proxyCredential'].Password -eq '') 'Editing proxy endpoint in JSON cannot reuse the saved password'
     [IO.File]::WriteAllText($settingsPath, $rawJson.Replace($manifest.historyId, '../outside'))
     $broken = $false
     try { $null = Invoke-Store (New-Store $root) Load @($unexpected) }
@@ -305,7 +315,7 @@ try {
     if ($null -ne $lock) { $lock.Dispose() }
     try {
         if ($null -ne $manifest) {
-            $services = @('rutracker', 'kinozal')
+            $services = @('rutracker', 'kinozal', 'proxy')
             foreach ($id in @($manifest.credentialId, $initialManifest.credentialId) | Select-Object -Unique) {
                 foreach ($service in $services) {
                     $target = Invoke-Store $store Target @($id, $service)

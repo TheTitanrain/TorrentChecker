@@ -1,8 +1,10 @@
 Imports System.IO
+Imports System.Net
 
 Module mdlSettings
     Public LogPath As String = Path.Combine(Application.StartupPath, "log.txt")
     Friend ReadOnly SettingsStore As New clsSettingsStore(Application.StartupPath)
+    Friend ProxyCredential As New NetworkCredential()
     Private loaded As Dictionary(Of String, Object)
     Private settingsReady As Boolean
 
@@ -16,17 +18,17 @@ Module mdlSettings
     Public Sub SaveSettings()
         If Not settingsReady Then Return
         Try
-            WriteSettings(ProxySettings, Nothing, Nothing)
+            WriteSettings(ProxySettings, ProxyCredential, Nothing, Nothing)
         Catch ex As Exception
             ShowSaveError(ex)
         End Try
     End Sub
 
-    Friend Function SaveCredentialsAndProxy(proxy As Dictionary(Of String, Object),
+    Friend Function SaveCredentialsAndProxy(proxy As Dictionary(Of String, Object), proxyAuth As NetworkCredential,
                                             ruTracker As Dictionary(Of String, String), kinozal As Dictionary(Of String, String)) As Boolean
         If Not settingsReady Then Return False
         Try
-            WriteSettings(proxy, ruTracker, kinozal)
+            WriteSettings(proxy, proxyAuth, ruTracker, kinozal)
             Return True
         Catch ex As Exception
             ShowSaveError(ex)
@@ -38,7 +40,7 @@ Module mdlSettings
         MsgBox("Ошибка при записи настроек!" & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
     End Sub
 
-    Private Sub WriteSettings(proxy As Dictionary(Of String, Object),
+    Private Sub WriteSettings(proxy As Dictionary(Of String, Object), proxyAuth As NetworkCredential,
                               ruTracker As Dictionary(Of String, String), kinozal As Dictionary(Of String, String))
         Dim scrollIndex = frmMain.dgvTorrents.FirstDisplayedScrollingRowIndex
         Try
@@ -63,7 +65,7 @@ Module mdlSettings
         End If
 
         Dim data As New Dictionary(Of String, Object) From {
-            {"frmMain", MainFormSettings}, {"proxy", proxy},
+            {"frmMain", MainFormSettings}, {"proxy", proxy}, {"proxyCredential", proxyAuth},
             {"dtFoundTorrents", dtFoundTorrents}, {"dtStoredTorrents", dtStoredTorrents},
             {"dgvTorrentsColumns", dgvTorrentsColumns}, {"dgvTorrentsSorting", dgvTorrentsSorting},
             {"KwListToParamsMapping", KwListToParamsMapping}, {"KeyWordsParams", KeyWordsParams},
@@ -86,6 +88,7 @@ Module mdlSettings
             TrackerParams(Trackers.rutracker)("credentials") = loaded("rutracker_credentials")
             TrackerParams(Trackers.kinozal)("credentials") = loaded("kinozal_credentials")
             ProxySettings = loaded("proxy")
+            ProxyCredential = loaded("proxyCredential")
             dtFoundTorrents = loaded("dtFoundTorrents")
             dtStoredTorrents = loaded("dtStoredTorrents")
             KwListToParamsMapping = loaded("KwListToParamsMapping")
