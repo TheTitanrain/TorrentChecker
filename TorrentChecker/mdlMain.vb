@@ -410,13 +410,7 @@ Public Module mdlMain
 
     Public Function GetTorrentName(ByVal torrent_body As Byte()) As String
         Try
-            Dim torrent_body_string As String = Encoding.UTF8.GetString(torrent_body, 0, torrent_body.Length)
-            Dim matches As Match = Regex.Match(torrent_body_string, ":name([\d]+):(.+)", RegexOptions.IgnoreCase, REGEX_TIMEOUT)
-            Dim name_start_pos As Integer = matches.Groups(2).Index
-            Dim name_length As Integer = CInt(matches.Groups(1).Value)
-            Dim torrent_name As String
-
-            torrent_name = torrent_body_string.Substring(name_start_pos, name_length)
+            Dim torrent_name As String = New clsTorrentNameReader(torrent_body).ReadName()
 
             'cleaning, if any
             Dim pattern As String = New String(Path.GetInvalidFileNameChars())
