@@ -132,7 +132,7 @@ Partial Class frmMain
         Me.btnConnect.Name = "btnConnect"
         Me.btnConnect.Size = New System.Drawing.Size(114, 26)
         Me.btnConnect.TabIndex = 0
-        Me.btnConnect.Text = "Подключиться"
+        Me.btnConnect.Text = "Проверить сейчас"
         Me.btnConnect.UseVisualStyleBackColor = True
         '
         'dgvTorrents
