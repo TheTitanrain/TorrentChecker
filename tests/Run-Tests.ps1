@@ -358,9 +358,10 @@ $provider = New-Object Microsoft.CSharp.CSharpCodeProvider
 try {
     $compilerOptions = New-Object System.CodeDom.Compiler.CompilerParameters
     $compilerOptions.GenerateInMemory = $true
-    $compilerOptions.ReferencedAssemblies.AddRange([string[]]@($assembly.Location, 'System.dll', 'System.Net.Http.dll', 'System.Core.dll', 'System.Windows.Forms.dll'))
-    $compiledTests = $provider.CompileAssemblyFromFile($compilerOptions, (Join-Path $PSScriptRoot 'HttpTests.cs'))
+    $compilerOptions.ReferencedAssemblies.AddRange([string[]]@($assembly.Location, 'System.dll', 'System.Net.Http.dll', 'System.Core.dll', 'System.Windows.Forms.dll', 'System.Data.dll', 'System.Drawing.dll', 'System.Xml.dll'))
+    $compiledTests = $provider.CompileAssemblyFromFile($compilerOptions, ([string[]]@((Join-Path $PSScriptRoot 'HttpTests.cs'), (Join-Path $PSScriptRoot 'ScanTests.cs'))))
     if ($compiledTests.Errors.HasErrors) { throw ($compiledTests.Errors | Out-String) }
 } finally { $provider.Dispose() }
 $script:checks += [HttpTests]::Run()
+$script:checks += [ScanTests]::Run()
 Write-Host "PASS: $script:checks checks ($Configuration)"

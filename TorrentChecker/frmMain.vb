@@ -6,11 +6,8 @@ Imports System.Threading
 Public Class frmMain
     Private ReadOnly openMagnetMenu As New ToolStripMenuItem("Открыть magnet в торрент-клиенте")
     Private HTTP As New clsHTTP
-    Private HTTPResult As clsHTTP.HTTPResult
     Private HTTPUpdate As New clsHTTP
     Private HTTPUpdateResult As clsHTTP.HTTPResult
-    Private TrackerParse As New clsParse
-    Private TrackerParseResult As clsParse.ParseResult
     Private bsrcFoundTorrents As New BindingSource
     Private unread_errors_count As Integer = 0
     Private CaptchaParams As New Dictionary(Of String, Object) From
@@ -20,6 +17,9 @@ Public Class frmMain
             {"captcha_sid", ""},
             {"captcha_code", ""}
         }
+    Private activeScanGeneration As Long
+    Friend ScanSaveSettings As Action = Sub() SaveSettings()
+    Friend ScanOpenMagnet As Action(Of String) = AddressOf OpenMagnet
     Private isFormLoaded As Boolean = False
     Private isFormQueryToUnload As Boolean = False
 
@@ -186,6 +186,22 @@ Public Class frmMain
     End Sub
 
     Private Async Sub StartChecking()
+        Await ScanAsync()
+    End Sub
+
+    Private Function IsCurrentScan(generation As Long, token As CancellationToken) As Boolean
+        Return generation = activeScanGeneration AndAlso Not token.IsCancellationRequested AndAlso
+            Not isFormQueryToUnload AndAlso Not IsDisposed AndAlso Not Disposing
+    End Function
+
+    Friend Async Function ScanAsync() As Task
+        If isFormQueryToUnload OrElse IsDisposed OrElse Disposing Then Return
+        'Claim ownership before cancellation can release an earlier continuation.
+        activeScanGeneration += 1
+        Dim generation = activeScanGeneration
+        Dim HTTPResult As clsHTTP.HTTPResult
+        Dim TrackerParse As New clsParse
+        Dim TrackerParseResult As clsParse.ParseResult
         Dim new_torrents_dt As DataTable
         Dim SearchParams As New Dictionary(Of String, String)
         Dim tracker_name As String
@@ -245,13 +261,14 @@ Public Class frmMain
                     Try
                         If Not CBool(local_KeyWordsParams(tracker_id.ToString)) Then Continue For
                         If tracker_id = Trackers.rutracker Then
-                            Await AddRuTrackerAtomMatches(new_torrents_dt, local_KeyWordsParams, atomFeeds, cts)
-                            If cts.IsCancellationRequested Then Exit For
+                            Await AddRuTrackerAtomMatches(new_torrents_dt, local_KeyWordsParams, atomFeeds, cts, generation)
+                            If Not IsCurrentScan(generation, cts) Then Return
                             Continue For
                         End If
                         If Not TrackerParams(tracker_id)("is_tracker_failure") Then
                             If Not TrackerParams(tracker_id)("is_logged") Then
                                 HTTPResult = Await HTTP.HTTPPost(TrackerParams(tracker_id)("login_url"), TrackerParams(tracker_id)("credentials"))
+                                If Not IsCurrentScan(generation, cts) Then Return
                                 If HTTPResult.Success Then
                                     logged_result = CheckLogged(HTTPResult.Result, tracker_id)
                                     If logged_result.Status = LoggedResult.LoggedStatuses.no_logged Then
@@ -285,6 +302,7 @@ Public Class frmMain
                                 SearchParams.Add("s", local_KeyWordsParams("search"))
 
                                 HTTPResult = Await HTTP.HTTPGet(TrackerParams(tracker_id)("search_url"), SearchParams)
+                                If Not IsCurrentScan(generation, cts) Then Return
 
                                 If HTTPResult.Success Then
                                     TrackerParseResult = TrackerParse.ParseResults(HTTPResult.Result, tracker_id)
@@ -294,6 +312,7 @@ Public Class frmMain
                                             For Each dr As DataRow In TrackerParseResult.Result.Select("")
                                                 Try
                                                     HTTPResult = Await HTTP.HTTPGet(TrackerParams(tracker_id)("details_url") & dr(Columns.topic_id.ToString))
+                                                    If Not IsCurrentScan(generation, cts) Then Return
                                                     If HTTPResult.Success Then
                                                         dr(Columns.torrent_unique_identifier.ToString) = GetKinozalInfoHash(HTTPResult.Result)
                                                     Else
@@ -301,6 +320,7 @@ Public Class frmMain
                                                         Exit For
                                                     End If
                                                 Catch ex As Exception
+                                                    If Not IsCurrentScan(generation, cts) Then Return
                                                     LogOutput(String.Format("{0} '{1}' ({2}): {3}", "Ошибка получения уникального идентификатора для", dr(Columns.topic_name.ToString), tracker_name, GetProperExceptionText(ex)))
                                                     TrackerParseResult.Result.Rows.Remove(dr)
                                                 End Try
@@ -328,11 +348,12 @@ Public Class frmMain
                             End If
                         End If
                     Catch ex As Exception
+                        If Not IsCurrentScan(generation, cts) Then Return
                         LogOutput(String.Format("{0} ({1}): {2}", "Ошибка проверки", tracker_name, GetProperExceptionText(ex)))
                     End Try
                 Next
 
-                If cts.IsCancellationRequested Then ClearWorkingStatus() : Exit While
+                If Not IsCurrentScan(generation, cts) Then Return
 
                 'remove outdated stored torrents
                 Dim unix_date_time As Long = (DateTime.UtcNow - UNIX_TIME_ORIGIN).TotalSeconds
@@ -372,6 +393,7 @@ Public Class frmMain
                             End If
                         Next
                     Catch ex As Exception
+                        If Not IsCurrentScan(generation, cts) Then Return
                         LogOutput(String.Format("{0} ({1}): {2}", "Ошибка выражения для ручного фильтра", local_KeyWordsParams("additional_filter_text"), GetProperExceptionText(ex)))
                     End Try
                 End If
@@ -478,11 +500,12 @@ Public Class frmMain
                             If KeyWordsParams.ContainsKey(params_idx) AndAlso CBool(KeyWordsParams(params_idx)("send_to_client")) Then 'user can change/delete the option/keyword at any time
                                 Dim download As String = CStr(dr(Columns.torrent_dl.ToString))
                                 If tracker_id = Trackers.rutracker Then
-                                    OpenMagnet(download)
+                                    ScanOpenMagnet(download)
                                     Continue For
                                 End If
                                 Dim command_line As String = KeyWordsParams(params_idx)("client_command_line")
                                 HTTPResult = Await HTTP.HTTPGet(TrackerParams(tracker_id)("download_url") & download, Nothing, True)
+                                If Not IsCurrentScan(generation, cts) Then Return
 
                                 If HTTPResult.Success Then
                                     ProcessTorrentDownload(HTTPResult, tracker_id.ToString,
@@ -493,6 +516,7 @@ Public Class frmMain
                                 End If
                             End If
                         Catch ex As Exception
+                            If Not IsCurrentScan(generation, cts) Then Return
                             LogOutput(String.Format("{0} ({1}): {2}", "Ошибка передачи раздачи", tracker_name, GetProperExceptionText(ex)))
                         End Try
                     Next
@@ -512,30 +536,31 @@ Public Class frmMain
                 End If
 
                 local_KeyWordsParams.Clear()
-                If cts.IsCancellationRequested Then Exit While
+                If Not IsCurrentScan(generation, cts) Then Return
             End While
         Catch ex As Exception
+            If Not IsCurrentScan(generation, cts) Then Return
             LogOutput(String.Format("{0}: {1}", "Ошибка проверки", GetProperExceptionText(ex)), True, ex.ToString)
             ClearWorkingStatus()
         Finally
-            LAST_CHECK_TIME = DateTime.UtcNow
-
-            If Not APP_PAUSED Then
-                tmrStartChecking.Interval = CHECK_INTERVAL
-                tmrStartChecking.Enabled = True
+            If IsCurrentScan(generation, cts) Then
+                LAST_CHECK_TIME = DateTime.UtcNow
+                If Not APP_PAUSED Then
+                    tmrStartChecking.Interval = CHECK_INTERVAL
+                    tmrStartChecking.Enabled = True
+                End If
+                ScanSaveSettings()
             End If
-
-            If Not cts.IsCancellationRequested Then SaveSettings()
         End Try
-    End Sub
+    End Function
 
     Private Async Function AddRuTrackerAtomMatches(destination As DataTable, rule As Dictionary(Of String, String),
                                                   feeds As Dictionary(Of String, List(Of clsRuTrackerAtom)),
-                                                  token As CancellationToken) As Task
+                                                  token As CancellationToken, generation As Long) As Task
         Dim seen As New HashSet(Of String)
         Dim checkedAt As Long = CLng((DateTime.UtcNow - UNIX_TIME_ORIGIN).TotalSeconds)
         For Each forumId As String In clsRuTrackerAtom.ForumIds(rule("forums_rutracker"))
-            If token.IsCancellationRequested Then Return
+            If Not IsCurrentScan(generation, token) Then Return
             If Not clsRuTrackerAtom.IsForumId(forumId) Then
                 LogOutput("Некорректный ID раздела RuTracker: " & forumId)
                 Continue For
@@ -544,6 +569,7 @@ Public Class frmMain
                 feeds(forumId) = Nothing
                 Try
                     Dim result = Await HTTP.HTTPGet(clsRuTrackerAtom.FeedBase & forumId & ".atom", Nothing, True, True)
+                    If Not IsCurrentScan(generation, token) Then Return
                     If Not result.Success OrElse token.IsCancellationRequested Then Return
                     Using buffer As New MemoryStream(result.ResultB)
                         Using reader As New StreamReader(buffer, Encoding.UTF8)
@@ -551,6 +577,7 @@ Public Class frmMain
                         End Using
                     End Using
                 Catch ex As Exception
+                    If Not IsCurrentScan(generation, token) Then Return
                     LogOutput("Ошибка Atom-ленты RuTracker (раздел " & forumId & "): " & GetProperExceptionText(ex))
                 End Try
             End If
@@ -1481,6 +1508,8 @@ Public Class frmMain
     End Sub
 
     Private Sub ApplicationExit()
+        isFormQueryToUnload = True
+        activeScanGeneration += 1
         HTTP.Cancel()
         HTTPUpdate.Cancel()
         picCaptcha.Image.Dispose()
