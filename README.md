@@ -45,10 +45,10 @@ RuTracker: разделы Atom и magnet-ссылки
 
 ### Если в Windows 11 нужного клиента нет в списке для `MAGNET`
 
-Скрипт `Register-MagnetClients.ps1` добавляет **qBittorrent** и **µTorrent Classic** в список обработчиков `MAGNET` для текущего пользователя. Он поддерживает установленные и переносные копии и запускается без прав администратора. Для следующих шагов нужен отдельно скачанный файл `Register-MagnetClients.ps1`.
+Скрипт [Register-MagnetClients.ps1](Register-MagnetClients.ps1) добавляет **qBittorrent** и **µTorrent Classic** в список обработчиков `MAGNET` для текущего пользователя. Он поддерживает установленные и переносные копии и запускается без прав администратора.
 
 1. Если у вас переносная версия, сначала запустите торрент-клиент, чтобы скрипт нашёл его EXE.
-2. Откройте PowerShell в папке со скриптом и выполните команду.
+2. Скачайте скрипт по ссылке выше, откройте PowerShell в папке с ним и выполните команду.
 
    ```powershell
    powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Register-MagnetClients.ps1
