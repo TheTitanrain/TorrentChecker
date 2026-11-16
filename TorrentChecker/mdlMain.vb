@@ -200,8 +200,8 @@ Public Module mdlMain
 
     Public AppRepository As New Dictionary(Of String, String) From
     {
-        {"repository_url", "https://github.com/TorrentChecker/TorrentChecker/releases/latest"},
-        {"repository_api", "https://api.github.com/repos/TorrentChecker/TorrentChecker/releases/latest"}
+        {"repository_url", "https://github.com/TheTitanrain/TorrentChecker/releases/latest"},
+        {"repository_api", "https://api.github.com/repos/TheTitanrain/TorrentChecker/releases/latest"}
     }
 
     Public NewPMMenuVisible As New Dictionary(Of Trackers, Boolean) From
