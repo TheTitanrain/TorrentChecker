@@ -87,6 +87,43 @@ public static class HttpTests
                 Check(retained.All(x => !Object.ReferenceEquals(x, result) && !Object.ReferenceEquals(x.Headers, result.Headers)), "independent results and headers");
                 retained.Add(result);
             }
+            foreach (bool post in new[]{false, true})
+            foreach (string contentType in new[]{null, "text/plain", "text/plain; charset=cp1251",
+                "text/plain; charset=windows-1251", "text/plain; charset=utf-8"})
+            {
+                const string body = "Ответ: привет!";
+                var encoding = contentType != null && contentType.Contains("1251") ? Encoding.GetEncoding(1251) : Encoding.UTF8;
+                var task = post ? http.HTTPPost("https://offline.invalid/encoding", new Dictionary<string,string>(), false)
+                    : http.HTTPGet("https://offline.invalid/encoding", null, false, false);
+                var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(encoding.GetBytes(body)) };
+                if (contentType != null) response.Content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(contentType);
+                handler.Calls.Last().Completion.SetResult(response);
+                var result = Finish(task);
+                Check(result.Success && result.Result == body, "text decoding " + post + " " + contentType);
+                Check(contentType == null ? result.Headers.ContentType == null : result.Headers.ContentType.CharSet ==
+                    (contentType.Contains("1251") ? "windows-1251" : contentType.Contains("utf-8") ? "utf-8" : null), "preserve/normalize charset");
+            }
+            // Invoke the actual production response dispatch with side-effect observers.
+            var dispatch = typeof(frmMain).GetMethod("ProcessTorrentDownload", BindingFlags.Static | BindingFlags.NonPublic);
+            foreach (string contentType in new[]{null, "application/x-bittorrent", "text/html"})
+            {
+                var bytes = Encoding.UTF8.GetBytes("offline torrent body");
+                var task = http.HTTPGet("https://offline.invalid/torrent", null, true, false);
+                var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(bytes) };
+                if (contentType != null) response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+                handler.Calls.Last().Completion.SetResult(response);
+                var result = Finish(task);
+                int saves = 0, logs = 0;
+                string message = null, loggedBody = null;
+                Action<byte[]> save = body => { saves++; Check(body.SequenceEqual(bytes), "accepted bytes unchanged"); };
+                Action<string,string> log = (text, body) => { logs++; message = text; loggedBody = body; };
+                dispatch.Invoke(null, new object[]{result, "kinozal", save, log});
+                Check(result.Success && result.ResultB.SequenceEqual(bytes), "binary download unchanged");
+                Check(saves == (contentType == "application/x-bittorrent" ? 1 : 0), "only torrent type reaches save/client path");
+                Check(logs == (saves == 1 ? 0 : 1), "rejected download logged once");
+                if (logs != 0) Check(message.Contains("kinozal") && message.Contains(contentType ?? "Content-Type отсутствует") &&
+                    message.Contains("application/x-bittorrent") && loggedBody == Encoding.UTF8.GetString(bytes), "clear rejection diagnostic");
+            }
             var first = http.HTTPPost("https://offline.invalid/first", new Dictionary<string,string>{{"q", "one"}}, false);
             var firstCall = handler.Calls.Last();
             var second = http.HTTPGet("https://offline.invalid/second", null, true, false);

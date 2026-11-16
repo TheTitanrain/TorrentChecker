@@ -76,7 +76,8 @@ Public Class clsHTTP
                     If asBinary Then
                         ret.ResultB = Await Response.Content.ReadAsByteArrayAsync
                     Else
-                        If LCase(Response.Content.Headers.ContentType.CharSet) = "cp1251" Then
+                        If Response.Content.Headers.ContentType IsNot Nothing AndAlso
+                            LCase(Response.Content.Headers.ContentType.CharSet) = "cp1251" Then
                             Response.Content.Headers.ContentType.CharSet = "windows-1251"
                         End If
                         ret.Result = Await Response.Content.ReadAsStringAsync
@@ -118,7 +119,8 @@ Public Class clsHTTP
                             If asBinary Then
                                 ret.ResultB = Await Response.Content.ReadAsByteArrayAsync
                             Else
-                                If LCase(Response.Content.Headers.ContentType.CharSet) = "cp1251" Then
+                                If Response.Content.Headers.ContentType IsNot Nothing AndAlso
+                                    LCase(Response.Content.Headers.ContentType.CharSet) = "cp1251" Then
                                     Response.Content.Headers.ContentType.CharSet = "windows-1251"
                                 End If
                                 ret.Result = Await Response.Content.ReadAsStringAsync()

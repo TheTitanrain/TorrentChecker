@@ -358,7 +358,7 @@ $provider = New-Object Microsoft.CSharp.CSharpCodeProvider
 try {
     $compilerOptions = New-Object System.CodeDom.Compiler.CompilerParameters
     $compilerOptions.GenerateInMemory = $true
-    $compilerOptions.ReferencedAssemblies.AddRange([string[]]@($assembly.Location, 'System.dll', 'System.Net.Http.dll', 'System.Core.dll'))
+    $compilerOptions.ReferencedAssemblies.AddRange([string[]]@($assembly.Location, 'System.dll', 'System.Net.Http.dll', 'System.Core.dll', 'System.Windows.Forms.dll'))
     $compiledTests = $provider.CompileAssemblyFromFile($compilerOptions, (Join-Path $PSScriptRoot 'HttpTests.cs'))
     if ($compiledTests.Errors.HasErrors) { throw ($compiledTests.Errors | Out-String) }
 } finally { $provider.Dispose() }

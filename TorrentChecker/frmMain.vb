@@ -485,13 +485,9 @@ Public Class frmMain
                                 HTTPResult = Await HTTP.HTTPGet(TrackerParams(tracker_id)("download_url") & download, Nothing, True)
 
                                 If HTTPResult.Success Then
-                                    If HTTPResult.Headers.ContentType.MediaType = "application/x-bittorrent" Then
-                                        SaveTorrent(HTTPResult.ResultB, command_line, tracker_name)
-                                    Else
-                                        LogOutput(String.Format("{0} ({1}): {2}", "Ошибка скачивания торрент-файла", tracker_id.ToString,
-                                                    "ожидался заголовок application/x-bittorrent, но получен " & HTTPResult.Headers.ContentType.MediaType),
-                                                    True, Encoding.UTF8.GetString(HTTPResult.ResultB, 0, HTTPResult.ResultB.Length))
-                                    End If
+                                    ProcessTorrentDownload(HTTPResult, tracker_id.ToString,
+                                        Sub(body) SaveTorrent(body, command_line, tracker_name),
+                                        Sub(message, body) LogOutput(message, True, body))
                                 Else
                                     Exit For
                                 End If
@@ -587,6 +583,19 @@ Public Class frmMain
     Private Sub OpenMagnet(magnet As String)
         If clsRuTrackerAtom.MagnetHash(magnet) = "" Then Throw New FormatException("Некорректная magnet-ссылка RuTracker.")
         Process.Start(New ProcessStartInfo(magnet) With {.UseShellExecute = True})
+    End Sub
+
+    Friend Shared Sub ProcessTorrentDownload(result As clsHTTP.HTTPResult, tracker As String,
+                                              save As Action(Of Byte()), log As Action(Of String, String))
+        Dim contentType = result.Headers.ContentType
+        If contentType IsNot Nothing AndAlso contentType.MediaType = "application/x-bittorrent" Then
+            save(result.ResultB)
+        Else
+            Dim received As String = If(contentType Is Nothing, "Content-Type отсутствует", contentType.MediaType)
+            log(String.Format("{0} ({1}): {2}", "Ошибка скачивания торрент-файла", tracker,
+                              "ожидался заголовок application/x-bittorrent, но получен " & received),
+                Encoding.UTF8.GetString(result.ResultB, 0, result.ResultB.Length))
+        End If
     End Sub
 
     Private Sub SaveTorrent(ByVal torrent_body As Byte(), ByVal command_line As String, ByVal tracker_name As String)
