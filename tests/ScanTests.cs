@@ -36,9 +36,11 @@ public static class ScanTests
     sealed class Handler : HttpMessageHandler
     {
         public readonly List<TaskCompletionSource<HttpResponseMessage>> Calls = new List<TaskCompletionSource<HttpResponseMessage>>();
+        public readonly List<string> Requests = new List<string>();
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken token)
         {
             var result = new TaskCompletionSource<HttpResponseMessage>();
+            Requests.Add(request.Method + " " + request.RequestUri.AbsoluteUri);
             Calls.Add(result); // Deliberately ignore cancellation until the test releases this response.
             return result.Task;
         }
@@ -136,6 +138,22 @@ public static class ScanTests
     {
         checks = 0;
         Check(Thread.CurrentThread.GetApartmentState() == ApartmentState.STA, "requires STA");
+        using (var f = new Fixture(1))
+        {
+            mdlMain.KeyWordsParams[1]["rutracker"] = "False";
+            mdlMain.KeyWordsParams[1]["kinozal"] = "True";
+            var kinozal = (Dictionary<object, object>)mdlMain.TrackerParams[mdlMain.Trackers.kinozal];
+            kinozal["credentials"] = new Dictionary<string, string>{{"username", ""}, {"password", ""}};
+            kinozal["is_logged"] = false;
+            kinozal["is_tracker_failure"] = false;
+            var task = f.Start();
+            Check(f.Handler.Requests.Count == 1 && f.Handler.Requests[0] == "POST " + kinozal["login_url"], "Kinozal still attempts normal login");
+            f.Handler.Calls[0].SetResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Login rejected") });
+            Finish(task);
+            Check(!(bool)kinozal["is_logged"] && (bool)kinozal["is_tracker_failure"], "Kinozal failed login is not bypassed");
+            Check(f.Handler.Requests.Count == 1 && f.Log.Contains("Ошибка авторизации"), "Kinozal cannot search after rejected login");
+            Check(mdlMain.dtFoundTorrents.Rows.Count == 0 && f.Sends == 0, "rejected login cannot publish or send results");
+        }
         foreach (string completion in new[]{"cancel", "fault", "success"})
         using (var f = new Fixture(1))
         {

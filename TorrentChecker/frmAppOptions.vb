@@ -129,15 +129,10 @@
             Return False
         End If
 
-        If chkAutoChecking.Checked AndAlso TrackerParams(Trackers.rutracker)("credentials")("login_username") = "" AndAlso TrackerParams(Trackers.kinozal)("credentials")("username") = "" Then
-            MsgBox("Невозможно включить автопроверку при старте, заполните регистрационные данные хотя бы для одного трекера!", MsgBoxStyle.Exclamation + MsgBoxStyle.OkOnly)
+        Dim autoCheckingError = GetAutoCheckingError()
+        If autoCheckingError IsNot Nothing Then
             chkAutoChecking.Checked = False
-            Return False
-        End If
-
-        If chkAutoChecking.Checked AndAlso UBound(KwListToParamsMapping) < 1 Then
-            chkAutoChecking.Checked = False
-            MsgBox("Невозможно включить автопроверку при старте, добавьте как минимум одно ключевое слово!", MsgBoxStyle.Exclamation + MsgBoxStyle.OkOnly)
+            MsgBox(autoCheckingError, MsgBoxStyle.Exclamation + MsgBoxStyle.OkOnly)
             Return False
         End If
 
@@ -156,6 +151,13 @@
         End If
 
         Return True
+    End Function
+
+    Private Function GetAutoCheckingError() As String
+        If chkAutoChecking.Checked AndAlso UBound(KwListToParamsMapping) < 1 Then
+            Return "Невозможно включить автопроверку при старте, добавьте как минимум одно ключевое слово!"
+        End If
+        Return Nothing
     End Function
 
     Private Sub txtCheckInterval_LostFocus(sender As Object, e As EventArgs) Handles txtCheckInterval.LostFocus
