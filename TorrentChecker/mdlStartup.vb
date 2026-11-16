@@ -6,7 +6,12 @@ Friend Module mdlStartup
         Try
             Application.EnableVisualStyles()
             Application.SetCompatibleTextRenderingDefault(False)
-            Application.Run(My.Forms.frmMain)
+            Using settingsLock = SettingsStore.AcquireLock()
+                LoadSettingsData()
+                Application.Run(My.Forms.frmMain)
+            End Using
+        Catch ex As OperationCanceledException
+            Return
         Catch ex As Exception
             Environment.ExitCode = 1
             Dim message As String = ex.GetBaseException().Message

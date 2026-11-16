@@ -111,4 +111,210 @@ foreach ($name in @('frmMain', 'frmKeyWord', 'frmCredentials', 'frmForums', 'frm
     } finally { $form.Dispose() }
 }
 Assert ($assembly.EntryPoint.DeclaringType.FullName -eq 'TorrentChecker.mdlStartup') 'Use startup error logging entry point'
+
+$storeType = $assembly.GetType('TorrentChecker.clsSettingsStore', $true)
+$jsonType = $assembly.GetType('TorrentChecker.clsSettingsJson', $true)
+$vaultType = $assembly.GetType('TorrentChecker.clsCredentialStore', $true)
+function New-Store([string]$root) {
+    return $storeType.GetConstructors($instanceFlags)[0].Invoke(@($root))
+}
+function Invoke-Store($store, [string]$method, [object[]]$arguments) {
+    if ($null -ne $arguments) {
+        for ($i = 0; $i -lt $arguments.Length; $i++) {
+            if ($null -ne $arguments[$i]) { $arguments[$i] = $arguments[$i].PSObject.BaseObject }
+        }
+    }
+    return ,$storeType.GetMethod($method, $instanceFlags).Invoke($store, $arguments)
+}
+
+$root = Join-Path ([IO.Path]::GetTempPath()) ('TorrentChecker-test-' + [Guid]::NewGuid().ToString('N'))
+$null = [IO.Directory]::CreateDirectory($root)
+$store = New-Store $root
+$settingsPath = Join-Path $root 'settings.json'
+$legacyPath = Join-Path $root 'settings.dat'
+$accept = [Func[bool]]{ $true }
+$reject = [Func[bool]]{ $false }
+$unexpected = [Func[bool]]{ throw 'Legacy import should not be offered' }
+$lock = $null
+$manifest = $null
+try {
+    $lock = Invoke-Store $store AcquireLock
+    $locked = $false
+    try { $null = Invoke-Store (New-Store $root) AcquireLock } catch { $locked = $true }
+    Assert $locked 'Only one process or store can hold the directory lock'
+    Assert ($null -eq (Invoke-Store $store Load @($unexpected))) 'Fresh installation has no stored settings'
+    [IO.File]::WriteAllBytes($legacyPath, [byte[]]@())
+    Assert ($null -eq (Invoke-Store $store Load @($unexpected))) 'Empty legacy file is a fresh configuration'
+
+    $fixture = New-Object 'System.Collections.Generic.Dictionary[string,object]'
+    $rules = New-Object 'System.Collections.Generic.Dictionary[int,System.Collections.Generic.Dictionary[string,string]]'
+    foreach ($id in @(0, 7, 2)) {
+        $rule = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+        $rule.Add('label', ('Rule ' + $id + ' { "quote" \\ slash }'))
+        $rule.Add('count_of_new', $(if ($id -eq 2) { '-1' } else { '2' }))
+        $rule.Add('paused', 'False')
+        $rules.Add($id, $rule)
+    }
+    $fixture.Add('KeyWordsParams', $rules)
+    $fixture.Add('KwListToParamsMapping', [int[]]@(0, 7, 2))
+    $fixture.Add('CHECK_INTERVAL', 29000)
+    $fixture.Add('TORRENTS_MAX_RESULTS', [int16]200)
+    $fixture.Add('TORRENTS_MAX_STORETIME', [long]20000000001)
+    $window = New-Object 'System.Collections.Generic.Dictionary[string,object]'
+    $window.Add('width', 1234)
+    $window.Add('windowstate', [Windows.Forms.FormWindowState]::Maximized)
+    $fixture.Add('frmMain', $window)
+    $column = New-Object 'System.Collections.Generic.Dictionary[string,object]'
+    $column.Add('width', 451)
+    $column.Add('visibility', $false)
+    $columns = New-Object 'System.Collections.Generic.Dictionary[string,object]'
+    $columns.Add('topic_name', $column)
+    $fixture.Add('dgvTorrentsColumns', $columns)
+    $proxy = New-Object 'System.Collections.Generic.Dictionary[string,object]'
+    $proxy.Add('use_proxy', $true)
+    $proxy.Add('proxy_address', 'localhost')
+    $proxy.Add('proxy_port', '3128')
+    $fixture.Add('proxy', $proxy)
+    $user = 'test-' + [char]0x416
+    $rtSecret = 'rt-test-secret-' + [char]0x417
+    $kzSecret = 'kz-test-secret-' + [char]0x418
+    $ru = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+    $ru.Add('login_username', $user)
+    $ru.Add('login_password', $rtSecret)
+    $fixture.Add('rutracker_credentials', $ru)
+    $kz = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+    $kz.Add('username', $user)
+    $kz.Add('password', $kzSecret)
+    $fixture.Add('kinozal_credentials', $kz)
+    $options = New-Object 'System.Collections.Generic.Dictionary[string,object]'
+    $options.Add('check_for_updates', $false)
+    $options.Add('dgv_font_bold', (New-Object Drawing.Font('Verdana', 11, [Drawing.FontStyle]'Bold,Italic')))
+    $fixture.Add('AppOptions', $options)
+
+    $schema = $jsonType.GetMethod('CreateHistoryTable', $staticFlags)
+    [Data.DataTable]$found = $schema.Invoke($null, @($true))
+    [Data.DataTable]$stored = $schema.Invoke($null, @($false))
+    $time = [long]9007199254740993
+    $row = $found.NewRow()
+    $row['tracker_id'] = 1
+    $row['found_unix_datetime'] = $time
+    $row['keyword_id'] = 7
+    $row['marked_as_new'] = $true
+    $row['torrent_size_bytes'] = 18.125
+    $found.Rows.Add($row)
+    $row = $found.NewRow()
+    $row['keyword_id'] = 2
+    $row['topic_name'] = 'Second rule result'
+    $found.Rows.Add($row)
+    $null = $stored.Rows.Add([object[]]@(1, $time, '123', 'abc'))
+    $fixture.Add('dtFoundTorrents', $found)
+    $fixture.Add('dtStoredTorrents', $stored)
+
+    $stream = [IO.File]::Create($legacyPath)
+    try {
+        $gzip = New-Object IO.Compression.GZipStream($stream, [IO.Compression.CompressionMode]::Compress)
+        try { (New-Object Runtime.Serialization.Formatters.Binary.BinaryFormatter).Serialize($gzip, $fixture) }
+        finally { $gzip.Dispose() }
+    } finally { $stream.Dispose() }
+    $legacyHash = (Get-FileHash -LiteralPath $legacyPath).Hash
+    $declined = $false
+    try { $null = Invoke-Store $store Load @($reject) } catch { $declined = $_.Exception.InnerException -is [OperationCanceledException] }
+    Assert ($declined -and -not (Test-Path -LiteralPath $settingsPath)) 'Declining legacy import leaves JSON unpublished'
+
+    # Block the final rename so the history and vault staging actually execute before the failure.
+    $blockImport = [Func[bool]]{
+        $null = [IO.Directory]::CreateDirectory($settingsPath)
+        return $true
+    }
+    $failed = $false
+    try { $null = Invoke-Store $store Load @($blockImport) } catch {
+        if ($_.Exception.InnerException -isnot [ComponentModel.Win32Exception]) { throw }
+        $failed = $true
+    }
+    Assert ($failed -and @(Get-ChildItem -Path $root -Filter 'history-*.json').Count -eq 0) 'Failed import removes staged history'
+    [IO.Directory]::Delete($settingsPath)
+
+    $data = Invoke-Store $store Load @($accept)
+    $manifest = Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json
+    $initialManifest = $manifest
+    Assert ((Get-FileHash -LiteralPath $legacyPath).Hash -eq $legacyHash) 'Legacy migration preserves original bytes'
+    Assert (($data['KwListToParamsMapping'] -join ',') -eq '0,7,2') 'Preserve rule IDs and display order'
+    Assert ($data['KeyWordsParams'][7]['label'] -ceq $rules[7]['label']) 'JSON preserves quotes, braces and backslashes in rule text'
+    Assert ($data['KeyWordsParams'][2]['count_of_new'] -eq '-1') 'Preserve signed legacy unread counts'
+    Assert ($data['AppOptions']['dgv_font_bold'].Size -eq 11 -and $data['AppOptions']['dgv_font_bold'].Italic) 'Restore legacy font'
+    Assert ($data['frmMain']['width'] -eq 1234 -and $data['frmMain']['windowstate'] -eq [Windows.Forms.FormWindowState]::Maximized -and
+            $data['dgvTorrentsColumns']['topic_name']['width'] -eq 451 -and
+            -not $data['dgvTorrentsColumns']['topic_name']['visibility']) 'Restore window and grid layout'
+    Assert ($data['TORRENTS_MAX_STORETIME'] -eq 20000000001 -and $data['TORRENTS_MAX_RESULTS'] -eq 200 -and
+            $data['CHECK_INTERVAL'] -eq 29000) 'Preserve intervals, retention and result limit'
+    Assert ($data['rutracker_credentials']['login_password'] -ceq $rtSecret -and
+            $data['rutracker_credentials']['login_username'] -ceq $user -and $data['rutracker_credentials'].ContainsKey('login')) 'Restore Unicode RuTracker credentials and protocol defaults'
+    Assert ($data['kinozal_credentials']['password'] -ceq $kzSecret -and $data['kinozal_credentials'].ContainsKey('wact')) 'Restore Kinozal password and protocol defaults'
+    Assert ($data['proxy']['proxy_address'] -eq 'localhost' -and $data['proxy']['proxy_port'] -eq '3128') 'Migrate legacy proxy address and port'
+    $row = $data['dtFoundTorrents'].Rows[0]
+    Assert ($row['keyword_id'] -eq 7 -and $row['found_unix_datetime'] -eq $time -and $row['tracker_id'] -eq 1 -and
+            $row['marked_as_new'] -eq $true -and $row['torrent_size_bytes'] -eq 18.125 -and
+            $row.IsNull('topic_name')) 'Restore found history types and nulls'
+    Assert ($data['dtStoredTorrents'].Rows[0]['found_unix_datetime'] -eq $time) 'Restore deduplication history precisely'
+    Assert ($data['dtFoundTorrents'].Rows[1]['keyword_id'] -eq 2 -and
+            $data['dtFoundTorrents'].Rows[1]['topic_name'] -eq 'Second rule result') 'Keep results associated with both reordered rules'
+
+    $data['rutracker_credentials']['login_password'] = 'pending-test-password'
+    $beforeSave = [IO.File]::ReadAllText($settingsPath)
+    $blocked = [IO.File]::Open($settingsPath, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+    try {
+        $failed = $false
+        try { $null = Invoke-Store $store Save @($data, $true) } catch {
+            if ($_.Exception.InnerException -isnot [ComponentModel.Win32Exception]) { throw }
+            $failed = $true
+        }
+        Assert $failed 'An unavailable manifest must fail the save'
+    } finally { $blocked.Dispose() }
+    $reloaded = Invoke-Store (New-Store $root) Load @($unexpected)
+    Assert ($reloaded['rutracker_credentials']['login_password'] -ceq $rtSecret -and
+            [IO.File]::ReadAllText($settingsPath) -ceq $beforeSave -and
+            $reloaded['dtFoundTorrents'].Rows[0]['keyword_id'] -eq 7 -and
+            @(Get-ChildItem -Path $root -Filter 'history-*.json').Count -eq 1) 'Failed save retains prior settings, history and vault records'
+    $null = Invoke-Store $store Save @($reloaded, $true)
+    $rawJson = Get-Content -LiteralPath $settingsPath -Raw
+    $manifest = $rawJson | ConvertFrom-Json
+    $historyPath = Join-Path $root ('history-' + $manifest.historyId + '.json')
+    foreach ($secret in @($rtSecret, $kzSecret)) {
+        Assert (-not $rawJson.Contains($secret) -and -not [IO.File]::ReadAllText($historyPath).Contains($secret)) 'Secrets are absent from both JSON files'
+    }
+    Assert ($rawJson.Contains([Environment]::NewLine) -and -not $rawJson.Contains('dtFoundTorrents')) 'Settings are formatted and omit history tables'
+    $reloaded = Invoke-Store (New-Store $root) Load @($unexpected)
+
+    $reloaded['dtFoundTorrents'].Rows[0]['topic_name'] = 'Updated test title'
+    $null = Invoke-Store $store Save @($reloaded, $false)
+    $rawJson = [IO.File]::ReadAllText($settingsPath)
+    $ordinarySave = $rawJson | ConvertFrom-Json
+    $reloaded = Invoke-Store (New-Store $root) Load @($unexpected)
+    Assert ($ordinarySave.credentialId -eq $manifest.credentialId -and $ordinarySave.historyId -ne $manifest.historyId -and
+            $reloaded['dtFoundTorrents'].Rows[0]['topic_name'] -eq 'Updated test title' -and
+            $reloaded['rutracker_credentials']['login_password'] -ceq $rtSecret) 'Ordinary history save retains existing vault entries'
+    $manifest = $ordinarySave
+    $historyPath = Join-Path $root ('history-' + $manifest.historyId + '.json')
+
+    [IO.File]::WriteAllText($settingsPath, $rawJson.Replace($manifest.historyId, '../outside'))
+    $broken = $false
+    try { $null = Invoke-Store (New-Store $root) Load @($unexpected) }
+    catch { $broken = $_.Exception.InnerException -is [IO.InvalidDataException] }
+    Assert ($broken -and (Test-Path -LiteralPath $historyPath)) 'Reject invalid history ID without retrying legacy or modifying history'
+} finally {
+    if ($null -ne $lock) { $lock.Dispose() }
+    try {
+        if ($null -ne $manifest) {
+            $services = @('rutracker', 'kinozal')
+            foreach ($id in @($manifest.credentialId, $initialManifest.credentialId) | Select-Object -Unique) {
+                foreach ($service in $services) {
+                    $target = Invoke-Store $store Target @($id, $service)
+                    $null = $vaultType.GetMethod('DeleteCredential', $staticFlags).Invoke($null, @($target))
+                }
+            }
+        }
+    } finally {
+        [IO.Directory]::Delete($root, $true)
+    }
+}
 Write-Host "PASS: $script:checks checks ($Configuration)"

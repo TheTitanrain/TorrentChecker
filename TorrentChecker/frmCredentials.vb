@@ -43,30 +43,11 @@
                 txtLogin_kz.Focus()
         End Select
     End Sub
-    Private Function MakeChecks() As Boolean
-        Dim x As Integer 'dummy variable for Integer.TryParse
-
-        If chkUseProxy.Checked Then
-            If txtProxyAddress.TextLength = 0 Then
-                MsgBox("Некорректный адрес прокси-сервера", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
-                txtProxyAddress.SelectAll()
-                txtProxyAddress.Focus()
-                Return False
-            End If
-
-            If Not Integer.TryParse(txtProxyPort.Text, x) Then
-                MsgBox("Неправильный номер порта. Он должен состоять только из цифр", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
-                txtProxyPort.SelectAll()
-                txtProxyPort.Focus()
-                Return False
-            End If
-
-            If CInt(txtProxyPort.Text) > 65535 Then
-                MsgBox("Некорректный номер порта", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
-                txtProxyPort.SelectAll()
-                txtProxyPort.Focus()
-                Return False
-            End If
+    Private Function MakeChecks(proxy As Dictionary(Of String, Object)) As Boolean
+        If chkUseProxy.Checked AndAlso clsSettingsStore.ProxyEndpoint(proxy) Is Nothing Then
+            MsgBox("Некорректный адрес или порт прокси-сервера.", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            txtProxyAddress.Focus()
+            Return False
         End If
 
         If txtLogin_rt.TextLength > 0 And txtPassword_rt.TextLength = 0 Then
@@ -127,11 +108,11 @@
     End Sub
 
     Private Sub btnSave_Click(sender As Object, e As EventArgs) Handles btnSave.Click
-        If Not MakeChecks() Then Exit Sub
-
-        ProxySettings("use_proxy") = chkUseProxy.Checked
-        ProxySettings("proxy_address") = txtProxyAddress.Text
-        ProxySettings("proxy_port") = txtProxyPort.Text
+        Dim proxy = ProxyFromForm()
+        If Not MakeChecks(proxy) Then Exit Sub
+        Dim ru = UpdatedCredential(Trackers.rutracker, "login_username", txtLogin_rt.Text, "login_password", txtPassword_rt.Text)
+        Dim kz = UpdatedCredential(Trackers.kinozal, "username", txtLogin_kz.Text, "password", txtPassword_kz.Text)
+        If Not SaveCredentialsAndProxy(proxy, ru, kz) Then Return
 
         If TrackerParams(Trackers.rutracker)("credentials")("login_username") <> txtLogin_rt.Text _
             Or TrackerParams(Trackers.rutracker)("credentials")("login_password") <> txtPassword_rt.Text Then
@@ -145,15 +126,26 @@
             HTTP.ClearCookies(New Uri(TrackerParams(Trackers.kinozal)("login_url")))
         End If
 
-        TrackerParams(Trackers.rutracker)("credentials")("login_username") = txtLogin_rt.Text
-        TrackerParams(Trackers.rutracker)("credentials")("login_password") = txtPassword_rt.Text
-        TrackerParams(Trackers.kinozal)("credentials")("username") = txtLogin_kz.Text
-        TrackerParams(Trackers.kinozal)("credentials")("password") = txtPassword_kz.Text
-
-        SaveSettings()
+        ProxySettings = proxy
+        TrackerParams(Trackers.rutracker)("credentials") = ru
+        TrackerParams(Trackers.kinozal)("credentials") = kz
 
         Me.Hide()
     End Sub
+
+    Private Function ProxyFromForm() As Dictionary(Of String, Object)
+        Return New Dictionary(Of String, Object) From {
+            {"use_proxy", chkUseProxy.Checked}, {"proxy_address", txtProxyAddress.Text.Trim()}, {"proxy_port", txtProxyPort.Text}
+        }
+    End Function
+
+    Private Shared Function UpdatedCredential(tracker As Trackers, userKey As String, user As String,
+                                              passwordKey As String, password As String) As Dictionary(Of String, String)
+        Dim fields As New Dictionary(Of String, String)(DirectCast(TrackerParams(tracker)("credentials"), Dictionary(Of String, String)))
+        fields(userKey) = user
+        fields(passwordKey) = password
+        Return fields
+    End Function
 
     Private Sub chkUseProxy_CheckedChanged(sender As Object, e As EventArgs) Handles chkUseProxy.CheckedChanged
         txtProxyAddress.Enabled = chkUseProxy.Checked
@@ -164,9 +156,6 @@
         txtProxyAddress.SelectAll()
     End Sub
 
-    Private Sub txtProxyAddress_LostFocus(sender As Object, e As EventArgs) Handles txtProxyAddress.LostFocus
-        txtProxyAddress.Text.Trim()
-    End Sub
 
     Private Sub txtLogin_rt_GotFocus(sender As Object, e As EventArgs) Handles txtLogin_rt.GotFocus
         txtLogin_rt.SelectAll()

@@ -110,6 +110,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApplicationEvents.vb" />
+    <Compile Include="clsCredentialStore.vb" />
+    <Compile Include="clsSettingsJson.vb" />
+    <Compile Include="clsSettingsStore.vb" />
     <Compile Include="clsHTTP.vb" />
     <Compile Include="clsListViewExt.vb">
       <SubType>Component</SubType>

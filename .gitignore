@@ -338,3 +338,11 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+
+# Local TorrentChecker state
+settings.dat
+settings.json
+history-*.json
+.settings.lock
+settings.json.*.tmp
+history-*.json.*.tmp

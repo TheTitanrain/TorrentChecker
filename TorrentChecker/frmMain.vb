@@ -38,6 +38,7 @@ Public Class frmMain
     End Sub
 
     Private Sub frmMain_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
+        If Not isFormLoaded Then Return
         If e.CloseReason = CloseReason.UserClosing And AppOptions("close_to_tray") And Not isFormQueryToUnload Then
             AppHide(True)
             e.Cancel = True
@@ -86,13 +87,10 @@ Public Class frmMain
             dgvTorrents.DataSource = bsrcFoundTorrents
             AddHandler dgvTorrents.DataBindingComplete, AddressOf dgvTorrents_DataBindingComplete
 
-            For Each kw_id As KeyValuePair(Of Integer, Dictionary(Of String, String)) In KeyWordsParams
-                If kw_id.Key = 0 Then
-                    ShowCountOfNewTorrents(0)
-                    Continue For
-                End If
-                Dim cnt As Integer = CInt(kw_id.Value("count_of_new"))
-                RenameKWItem(kw_id.Key, kw_id.Value("label"), cnt)
+            ShowCountOfNewTorrents(0)
+            For rowIndex = 1 To KwListToParamsMapping.Length - 1
+                Dim rule = KeyWordsParams(KwListToParamsMapping(rowIndex))
+                RenameKWItem(rowIndex, rule("label"), CInt(rule("count_of_new")))
             Next
 
             'restore default torrents sorting
@@ -114,6 +112,8 @@ Public Class frmMain
                 tbControl.TabPages.Remove(TabPage_journal)
             End If
 
+            isFormLoaded = True
+            MarkSettingsReady()
             If AppOptions("auto_cheking") Then
                 StartChecking()
             End If
@@ -121,8 +121,10 @@ Public Class frmMain
             CheckLatestUpdate()
         Catch ex As Exception
             MsgBox("Ошибка загрузки программы!" & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
-        Finally
-            isFormLoaded = True
+            If Not isFormLoaded Then
+                Environment.ExitCode = 1
+                Close()
+            End If
         End Try
     End Sub
 
