@@ -212,7 +212,7 @@ Public Module mdlMain
         }
 
     'constants
-    Public APP_VERSION As String = "4.1.0"
+    Public APP_VERSION As String = "4.2.0"
     Public APP_NAME As String = "TorrentChecker v" & APP_VERSION
     Public REGEX_TIMEOUT As TimeSpan = TimeSpan.FromMilliseconds(1000)
     Public ITEM_PADDING As New System.Windows.Forms.Padding(5, 0, 0, 0)

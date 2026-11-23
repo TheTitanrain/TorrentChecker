@@ -122,4 +122,6 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File tests\Run-Tests.ps1
 
 Для Debug замените конфигурацию сборки на `Debug` и добавьте к команде тестов `-Configuration Debug`. Тесты запускаются в Windows PowerShell 5.1 без дополнительных пакетов.
 
+Текущая версия — `4.2.0` (версия сборки и файла EXE — `4.2.0.0`).
+
 Результат сборки — `TorrentChecker/bin/Release` (или `Debug`). Для запуска нужны `TorrentChecker.exe` и лежащий рядом `TorrentChecker.exe.config`.
