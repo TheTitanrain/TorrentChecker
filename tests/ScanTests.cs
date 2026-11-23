@@ -276,7 +276,7 @@ public static class ScanTests
             var label = (TextBox)Get(editor, "txtKeyWordLabel");
             var send = (CheckBox)Get(editor, "chkSendToClient");
             var help = (Label)Get(editor, "lblTCCommandLineHelp");
-            var presets = new[] { "btnResetToUT", "btnResetToQB", "btnResetToTransmission", "btnResetToDeluge" }
+            var presets = new[] { "btnResetToUT", "btnResetToQB" }
                 .Select(name => (Button)Get(editor, name)).ToArray();
             var ruTracker = (CheckBox)Get(editor, "chkRuTracker");
             var kinozalTracker = (CheckBox)Get(editor, "chkKinozal");
@@ -293,6 +293,7 @@ public static class ScanTests
             Control position = command;
             var group = command.Parent;
             group.PerformLayout();
+            Check(group.Controls.OfType<Button>().Count() == presets.Length, "the behavior section offers only the two expected preset buttons");
             foreach (var button in presets)
             {
                 Check(button.TabStop && group.GetNextControl(position, true) == button, "preset buttons follow the command in tab order");
@@ -309,15 +310,11 @@ public static class ScanTests
             Check(mdlMain.KeyWordsParams[2][ClientCommandKey] == "", "Kinozal rule saves blank command");
 
             ruTracker.Checked = true;
-            foreach (var button in presets.Skip(2))
-            {
-                command.Text = "previous command for " + button.Name;
-                Invoke(button, "OnClick", EventArgs.Empty);
-                Check(command.Text == "%ClientPath% %TorrentSource%", button.Name + " fills the template immediately");
-            }
+            const string customCommand = "%ClientPath% --skip-dialog=true %TorrentSource%";
+            command.Text = customCommand;
             Invoke(editor, "btnSave_Click", null, EventArgs.Empty);
-            Check(command.Enabled && mdlMain.KeyWordsParams[3][ClientCommandKey] == command.Text,
-                "mixed rule saves the preset command");
+            Check(command.Enabled && mdlMain.KeyWordsParams[3][ClientCommandKey] == customCommand,
+                "mixed rule saves the manually entered command");
             kinozalTracker.Checked = false;
             Check(command.Enabled && presets.All(button => button.Enabled), "RuTracker-only rule enables the same command and presets");
             ruTracker.Checked = false;

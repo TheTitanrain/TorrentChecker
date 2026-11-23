@@ -407,15 +407,12 @@ Public Class frmKeyWord
         End If
     End Sub
 
-    Private Sub ResetClientCommand(sender As Object, e As EventArgs) Handles btnResetToUT.Click, btnResetToQB.Click,
-        btnResetToTransmission.Click, btnResetToDeluge.Click
+    Private Sub ResetClientCommand(sender As Object, e As EventArgs) Handles btnResetToUT.Click, btnResetToQB.Click
         Dim isQBittorrent = sender Is btnResetToQB
-        If sender Is btnResetToUT OrElse isQBittorrent Then
-            Dim clientName = If(isQBittorrent, "qBittorrent", "µTorrent Classic")
-            Dim answer = MessageBox.Show(Me, $"Восстановить исходную командную строку для {clientName}?", "Сброс команды",
-                                         MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2)
-            If answer <> DialogResult.Yes Then Return
-        End If
+        Dim clientName = If(isQBittorrent, "qBittorrent", "µTorrent Classic")
+        Dim answer = MessageBox.Show(Me, $"Восстановить исходную командную строку для {clientName}?", "Сброс команды",
+                                     MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2)
+        If answer <> DialogResult.Yes Then Return
 
         Dim arguments = If(isQBittorrent, " --skip-dialog=true ", " ")
         txtTCCommandLine.Text = clsTorrentClientCommand.ClientToken & arguments & clsTorrentClientCommand.SourceToken
@@ -425,8 +422,6 @@ Public Class frmKeyWord
         txtTCCommandLine.Enabled = chkSendToClient.Checked AndAlso (chkRuTracker.Checked OrElse chkKinozal.Checked)
         btnResetToUT.Enabled = txtTCCommandLine.Enabled
         btnResetToQB.Enabled = txtTCCommandLine.Enabled
-        btnResetToTransmission.Enabled = txtTCCommandLine.Enabled
-        btnResetToDeluge.Enabled = txtTCCommandLine.Enabled
         lblTCCommandLineHelp.Visible = chkRuTracker.Checked OrElse chkKinozal.Checked
     End Sub
 

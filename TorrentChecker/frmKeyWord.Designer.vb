@@ -50,8 +50,6 @@ Partial Class frmKeyWord
         Me.grpNotificationBox = New System.Windows.Forms.GroupBox()
         Me.btnResetToUT = New System.Windows.Forms.Button()
         Me.btnResetToQB = New System.Windows.Forms.Button()
-        Me.btnResetToTransmission = New System.Windows.Forms.Button()
-        Me.btnResetToDeluge = New System.Windows.Forms.Button()
         Me.lblTCCommandLineHelp = New System.Windows.Forms.Label()
         Me.txtTCCommandLine = New System.Windows.Forms.TextBox()
         Me.chkSendToClient = New System.Windows.Forms.CheckBox()
@@ -159,7 +157,7 @@ Partial Class frmKeyWord
         '
         'btnSave
         '
-        Me.btnSave.Location = New System.Drawing.Point(309, 568)
+        Me.btnSave.Location = New System.Drawing.Point(309, 533)
         Me.btnSave.Name = "btnSave"
         Me.btnSave.Size = New System.Drawing.Size(98, 26)
         Me.btnSave.TabIndex = 14
@@ -168,7 +166,7 @@ Partial Class frmKeyWord
         '
         'btnCancel
         '
-        Me.btnCancel.Location = New System.Drawing.Point(413, 568)
+        Me.btnCancel.Location = New System.Drawing.Point(413, 533)
         Me.btnCancel.Name = "btnCancel"
         Me.btnCancel.Size = New System.Drawing.Size(98, 26)
         Me.btnCancel.TabIndex = 15
@@ -302,8 +300,6 @@ Partial Class frmKeyWord
         '
         'grpNotificationBox
         '
-        Me.grpNotificationBox.Controls.Add(Me.btnResetToDeluge)
-        Me.grpNotificationBox.Controls.Add(Me.btnResetToTransmission)
         Me.grpNotificationBox.Controls.Add(Me.btnResetToQB)
         Me.grpNotificationBox.Controls.Add(Me.btnResetToUT)
         Me.grpNotificationBox.Controls.Add(Me.lblTCCommandLineHelp)
@@ -311,7 +307,7 @@ Partial Class frmKeyWord
         Me.grpNotificationBox.Controls.Add(Me.chkSendToClient)
         Me.grpNotificationBox.Location = New System.Drawing.Point(12, 355)
         Me.grpNotificationBox.Name = "grpNotificationBox"
-        Me.grpNotificationBox.Size = New System.Drawing.Size(499, 207)
+        Me.grpNotificationBox.Size = New System.Drawing.Size(499, 172)
         Me.grpNotificationBox.TabIndex = 6
         Me.grpNotificationBox.TabStop = False
         Me.grpNotificationBox.Text = "Поведение"
@@ -333,24 +329,6 @@ Partial Class frmKeyWord
         Me.btnResetToQB.TabIndex = 15
         Me.btnResetToQB.Text = "Сброс (qBittorrent)"
         Me.btnResetToQB.UseVisualStyleBackColor = True
-        '
-        'btnResetToTransmission
-        '
-        Me.btnResetToTransmission.Location = New System.Drawing.Point(9, 173)
-        Me.btnResetToTransmission.Name = "btnResetToTransmission"
-        Me.btnResetToTransmission.Size = New System.Drawing.Size(175, 26)
-        Me.btnResetToTransmission.TabIndex = 16
-        Me.btnResetToTransmission.Text = "Сброс (Transmission Qt)"
-        Me.btnResetToTransmission.UseVisualStyleBackColor = True
-        '
-        'btnResetToDeluge
-        '
-        Me.btnResetToDeluge.Location = New System.Drawing.Point(190, 173)
-        Me.btnResetToDeluge.Name = "btnResetToDeluge"
-        Me.btnResetToDeluge.Size = New System.Drawing.Size(175, 26)
-        Me.btnResetToDeluge.TabIndex = 17
-        Me.btnResetToDeluge.Text = "Сброс (Deluge GTK)"
-        Me.btnResetToDeluge.UseVisualStyleBackColor = True
         '
         'lblTCCommandLineHelp
         '
@@ -414,7 +392,7 @@ Partial Class frmKeyWord
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(96.0!, 96.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi
-        Me.ClientSize = New System.Drawing.Size(522, 598)
+        Me.ClientSize = New System.Drawing.Size(522, 563)
         Me.Controls.Add(Me.grpKWOptionsBox)
         Me.Controls.Add(Me.grpNotificationBox)
         Me.Controls.Add(Me.grpFiltersBox)
@@ -470,8 +448,6 @@ Partial Class frmKeyWord
     Friend WithEvents lblTCCommandLineHelp As System.Windows.Forms.Label
     Friend WithEvents btnResetToUT As System.Windows.Forms.Button
     Friend WithEvents btnResetToQB As System.Windows.Forms.Button
-    Friend WithEvents btnResetToTransmission As System.Windows.Forms.Button
-    Friend WithEvents btnResetToDeluge As System.Windows.Forms.Button
     Friend WithEvents grpKWOptionsBox As System.Windows.Forms.GroupBox
     Friend WithEvents chkPause As System.Windows.Forms.CheckBox
     Friend WithEvents chkUniqueness As System.Windows.Forms.CheckBox
