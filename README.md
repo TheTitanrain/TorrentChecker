@@ -54,13 +54,13 @@ RuTracker: разделы Atom и magnet-ссылки
 После подтверждения ссылки µTorrent Classic и qBittorrent подставляют шаблоны с `%ClientPath%`. Назначьте соответствующий клиент программой по умолчанию для нужного источника в Windows или укажите путь к его EXE в шаблоне. Ссылка qBittorrent подставляет команду, которая скрывает диалог при автоотправке. Глобальную настройку показа диалога можно оставить включённой для ручного добавления. [Параметры qBittorrent](https://github.com/qbittorrent/qBittorrent/blob/release-5.2.4/src/app/cmdoptions.cpp#L1852)
 
 ```text
-%ClientPath% --skip-dialog=true %TorrentSource%
+%ClientPath% --save-path="C:\PathToSave" --skip-dialog=true %TorrentSource%
 ```
 
-Для обычного открытия в µTorrent Classic используйте `%ClientPath% %TorrentSource%`. В правиле Кинозала параметр `/DIRECTORY` позволяет добавить локальный `.torrent` без диалога. Укажите существующую папку без завершающей обратной косой черты. [Параметры µTorrent Classic](https://documentation.help/uTorrent/AppendixB_04.html)
+В обоих шаблонах замените `C:\PathToSave` на свою папку загрузок. Сброс для µTorrent Classic подставляет команду с подпапкой по имени раздачи. В правиле Кинозала параметр `/directory` позволяет добавить локальный `.torrent` без диалога. [Параметры µTorrent Classic](https://documentation.help/uTorrent/AppendixB_04.html)
 
 ```text
-%ClientPath% /DIRECTORY "D:\Загрузки" %TorrentSource%
+%ClientPath% /directory "C:\PathToSave\%TorrentName%" %TorrentSource%
 ```
 
 Для других клиентов можно использовать команду `%ClientPath% %TorrentSource%`, если нужный клиент назначен в Windows программой по умолчанию для соответствующего источника.

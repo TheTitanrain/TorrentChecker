@@ -414,7 +414,8 @@ Public Class frmKeyWord
                                      MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2)
         If answer <> DialogResult.Yes Then Return
 
-        Dim arguments = If(isQBittorrent, " --skip-dialog=true ", " ")
+        Dim arguments = If(isQBittorrent, " --save-path=""C:\PathToSave"" --skip-dialog=true ",
+                           " /directory ""C:\PathToSave\%TorrentName%"" ")
         txtTCCommandLine.Text = clsTorrentClientCommand.ClientToken & arguments & clsTorrentClientCommand.SourceToken
     End Sub
 
