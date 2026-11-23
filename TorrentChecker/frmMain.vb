@@ -1805,7 +1805,9 @@ Public Class frmMain
     End Sub
 
     Private Sub msiAbout_Click(sender As Object, e As EventArgs) Handles msiAbout.Click
-        MsgBox(APP_NAME & vbCrLf & "2019, hardhouse", MsgBoxStyle.Information + MsgBoxStyle.OkOnly)
+        Dim description = UiText.T("Автоматический поиск торрентов по ключевым словам.")
+        Dim message = APP_NAME & vbCrLf & vbCrLf & description & vbCrLf & vbCrLf & My.Application.Info.Copyright.Trim()
+        MsgBox(message, MsgBoxStyle.Information Or MsgBoxStyle.OkOnly, UiText.T("О программе"))
     End Sub
 
     Private Sub dgvKeyWords_MouseMove(sender As Object, e As MouseEventArgs) Handles dgvKeyWords.MouseMove
