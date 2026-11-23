@@ -48,8 +48,8 @@ Partial Class frmKeyWord
         Me.Label2 = New System.Windows.Forms.Label()
         Me.tlpToolTip = New System.Windows.Forms.ToolTip(Me.components)
         Me.grpNotificationBox = New System.Windows.Forms.GroupBox()
-        Me.btnResetToUT = New System.Windows.Forms.Button()
-        Me.btnResetToQB = New System.Windows.Forms.Button()
+        Me.lnkResetToUT = New System.Windows.Forms.LinkLabel()
+        Me.lnkResetToQB = New System.Windows.Forms.LinkLabel()
         Me.lblTCCommandLineHelp = New System.Windows.Forms.Label()
         Me.txtTCCommandLine = New System.Windows.Forms.TextBox()
         Me.chkSendToClient = New System.Windows.Forms.CheckBox()
@@ -300,8 +300,8 @@ Partial Class frmKeyWord
         '
         'grpNotificationBox
         '
-        Me.grpNotificationBox.Controls.Add(Me.btnResetToQB)
-        Me.grpNotificationBox.Controls.Add(Me.btnResetToUT)
+        Me.grpNotificationBox.Controls.Add(Me.lnkResetToQB)
+        Me.grpNotificationBox.Controls.Add(Me.lnkResetToUT)
         Me.grpNotificationBox.Controls.Add(Me.lblTCCommandLineHelp)
         Me.grpNotificationBox.Controls.Add(Me.txtTCCommandLine)
         Me.grpNotificationBox.Controls.Add(Me.chkSendToClient)
@@ -312,23 +312,23 @@ Partial Class frmKeyWord
         Me.grpNotificationBox.TabStop = False
         Me.grpNotificationBox.Text = "Поведение"
         '
-        'btnResetToUT
+        'lnkResetToUT
         '
-        Me.btnResetToUT.Location = New System.Drawing.Point(9, 141)
-        Me.btnResetToUT.Name = "btnResetToUT"
-        Me.btnResetToUT.Size = New System.Drawing.Size(175, 26)
-        Me.btnResetToUT.TabIndex = 14
-        Me.btnResetToUT.Text = "Сброс (µTorrent Classic)"
-        Me.btnResetToUT.UseVisualStyleBackColor = True
+        Me.lnkResetToUT.Location = New System.Drawing.Point(9, 141)
+        Me.lnkResetToUT.Name = "lnkResetToUT"
+        Me.lnkResetToUT.Size = New System.Drawing.Size(175, 26)
+        Me.lnkResetToUT.TabIndex = 14
+        Me.lnkResetToUT.Text = "Сброс (µTorrent Classic)"
+        Me.lnkResetToUT.AutoSize = True
         '
-        'btnResetToQB
+        'lnkResetToQB
         '
-        Me.btnResetToQB.Location = New System.Drawing.Point(190, 141)
-        Me.btnResetToQB.Name = "btnResetToQB"
-        Me.btnResetToQB.Size = New System.Drawing.Size(175, 26)
-        Me.btnResetToQB.TabIndex = 15
-        Me.btnResetToQB.Text = "Сброс (qBittorrent)"
-        Me.btnResetToQB.UseVisualStyleBackColor = True
+        Me.lnkResetToQB.Location = New System.Drawing.Point(190, 141)
+        Me.lnkResetToQB.Name = "lnkResetToQB"
+        Me.lnkResetToQB.Size = New System.Drawing.Size(175, 26)
+        Me.lnkResetToQB.TabIndex = 15
+        Me.lnkResetToQB.Text = "Сброс (qBittorrent)"
+        Me.lnkResetToQB.AutoSize = True
         '
         'lblTCCommandLineHelp
         '
@@ -446,8 +446,8 @@ Partial Class frmKeyWord
     Friend WithEvents txtTCCommandLine As System.Windows.Forms.TextBox
     Friend WithEvents chkSendToClient As System.Windows.Forms.CheckBox
     Friend WithEvents lblTCCommandLineHelp As System.Windows.Forms.Label
-    Friend WithEvents btnResetToUT As System.Windows.Forms.Button
-    Friend WithEvents btnResetToQB As System.Windows.Forms.Button
+    Friend WithEvents lnkResetToUT As System.Windows.Forms.LinkLabel
+    Friend WithEvents lnkResetToQB As System.Windows.Forms.LinkLabel
     Friend WithEvents grpKWOptionsBox As System.Windows.Forms.GroupBox
     Friend WithEvents chkPause As System.Windows.Forms.CheckBox
     Friend WithEvents chkUniqueness As System.Windows.Forms.CheckBox

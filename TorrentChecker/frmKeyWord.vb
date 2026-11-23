@@ -407,8 +407,8 @@ Public Class frmKeyWord
         End If
     End Sub
 
-    Private Sub ResetClientCommand(sender As Object, e As EventArgs) Handles btnResetToUT.Click, btnResetToQB.Click
-        Dim isQBittorrent = sender Is btnResetToQB
+    Private Sub ResetClientCommand(sender As Object, e As EventArgs) Handles lnkResetToUT.LinkClicked, lnkResetToQB.LinkClicked
+        Dim isQBittorrent = sender Is lnkResetToQB
         Dim clientName = If(isQBittorrent, "qBittorrent", "µTorrent Classic")
         Dim answer = MessageBox.Show(Me, $"Восстановить исходную командную строку для {clientName}?", "Сброс команды",
                                      MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2)
@@ -420,8 +420,8 @@ Public Class frmKeyWord
 
     Private Sub UpdateClientCommandControls()
         txtTCCommandLine.Enabled = chkSendToClient.Checked AndAlso (chkRuTracker.Checked OrElse chkKinozal.Checked)
-        btnResetToUT.Enabled = txtTCCommandLine.Enabled
-        btnResetToQB.Enabled = txtTCCommandLine.Enabled
+        lnkResetToUT.Enabled = txtTCCommandLine.Enabled
+        lnkResetToQB.Enabled = txtTCCommandLine.Enabled
         lblTCCommandLineHelp.Visible = chkRuTracker.Checked OrElse chkKinozal.Checked
     End Sub
 

@@ -276,30 +276,30 @@ public static class ScanTests
             var label = (TextBox)Get(editor, "txtKeyWordLabel");
             var send = (CheckBox)Get(editor, "chkSendToClient");
             var help = (Label)Get(editor, "lblTCCommandLineHelp");
-            var presets = new[] { "btnResetToUT", "btnResetToQB" }
-                .Select(name => (Button)Get(editor, name)).ToArray();
+            var presets = new[] { "lnkResetToUT", "lnkResetToQB" }
+                .Select(name => (LinkLabel)Get(editor, name)).ToArray();
             var ruTracker = (CheckBox)Get(editor, "chkRuTracker");
             var kinozalTracker = (CheckBox)Get(editor, "chkKinozal");
             label.Text = "New command rule";
             Check(command.Text == "" && !command.Enabled, "new rule starts with a blank disabled command");
-            Check(presets.All(button => !button.Enabled), "client preset buttons are disabled without a tracker");
+            Check(presets.All(button => !button.Enabled), "client preset links are disabled without a tracker");
             var kinozal = (Dictionary<object, object>)mdlMain.TrackerParams[mdlMain.Trackers.kinozal];
             kinozal["credentials"] = new Dictionary<string, string> { { "username", "test" } };
             kinozalTracker.Checked = true;
-            Check(presets.All(button => !button.Enabled), "client preset buttons require automatic sending");
+            Check(presets.All(button => !button.Enabled), "client preset links require automatic sending");
             send.Checked = true;
-            Check(command.Enabled && presets.All(button => button.Enabled), "Kinozal enables shared command and preset buttons");
+            Check(command.Enabled && presets.All(button => button.Enabled), "Kinozal enables shared command and preset links");
 
             Control position = command;
             var group = command.Parent;
             group.PerformLayout();
-            Check(group.Controls.OfType<Button>().Count() == presets.Length, "the behavior section offers only the two expected preset buttons");
+            Check(group.Controls.OfType<LinkLabel>().Count() == presets.Length, "the behavior section offers only the two expected preset links");
             foreach (var button in presets)
             {
-                Check(button.TabStop && group.GetNextControl(position, true) == button, "preset buttons follow the command in tab order");
+                Check(button.TabStop && group.GetNextControl(position, true) == button, "preset links follow the command in tab order");
                 Check(group.ClientRectangle.Contains(button.Bounds) && button.Top >= help.Bottom &&
                     button.PreferredSize.Width <= button.Width && button.PreferredSize.Height <= button.Height &&
-                    !presets.Any(other => other != button && other.Bounds.IntersectsWith(button.Bounds)), "preset button and caption fit below command help");
+                    !presets.Any(other => other != button && other.Bounds.IntersectsWith(button.Bounds)), "preset link and caption fit below command help");
                 position = button;
             }
             Check(help.Right <= group.ClientSize.Width, "command help fits inside the behavior section: " + help.Bounds + ", " + group.ClientSize);
