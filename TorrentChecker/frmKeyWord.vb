@@ -11,7 +11,7 @@ Public Class frmKeyWord
         chkKinozal.Text = TrackerParams(Trackers.kinozal)("tracker_name")
 
         lblTCCommandLineHelp.Text = "Пустое поле — клиент Windows по умолчанию."
-        lblTCCommandLineHelp.Text &= vbCrLf & "%ClientPath% — программа для magnet или .torrent"
+        lblTCCommandLineHelp.Text &= vbCrLf & "%ClientPath% — путь к программе по умолчанию для magnet или .torrent"
         lblTCCommandLineHelp.Text &= vbCrLf & "%TorrentName% — название раздачи"
         lblTCCommandLineHelp.Text &= vbCrLf & "%TorrentSource% — magnet-ссылка или путь к .torrent"
         tlpToolTip.SetToolTip(chkSendToClient, "В смешанном правиле оба трекера используют одну команду. Параметры должны подходить обоим источникам.")
@@ -24,8 +24,6 @@ Public Class frmKeyWord
 
         lblForumsRutracker.Font = FONT_UNDERLINE
         lblForumsKinozal.Font = FONT_UNDERLINE
-        lblResetToUT.Font = FONT_UNDERLINE
-        lblResetToQB.Font = FONT_UNDERLINE
 
         tlpToolTip.SetToolTip(chkAdditionalFilter, "Можно задать дополнительный фильтр для результирующего набора списка торрентов в Regex-формате (регистр букв не учитывается)")
         tlpToolTip.SetToolTip(txtAdditionalFilter, tlpToolTip.GetToolTip(chkAdditionalFilter))
@@ -409,24 +407,43 @@ Public Class frmKeyWord
         End If
     End Sub
 
-    Private Sub lblResetToUT_Click(sender As Object, e As EventArgs) Handles lblResetToUT.Click
-        Dim ret As MsgBoxResult
-        ret = MsgBox("Восстановить исходную командную строку для uTorrent?", MsgBoxStyle.Question + MsgBoxStyle.YesNo + MsgBoxStyle.DefaultButton2)
-        If ret = MsgBoxResult.No Then Exit Sub
-        txtTCCommandLine.Text = "%ClientPath% %TorrentSource%"
+    Private Sub ResetAssociatedClientCommand(sender As Object, e As EventArgs) Handles btnResetToUT.Click, btnResetToQB.Click
+        Dim isQBittorrent = sender Is btnResetToQB
+        Dim clientName = If(isQBittorrent, "qBittorrent", "µTorrent Classic")
+        Dim answer = MessageBox.Show(Me, $"Восстановить исходную командную строку для {clientName}?", "Сброс команды",
+                                     MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2)
+        If answer = DialogResult.Yes Then
+            Dim arguments = If(isQBittorrent, " --skip-dialog=true ", " ")
+            txtTCCommandLine.Text = clsTorrentClientCommand.ClientToken & arguments & clsTorrentClientCommand.SourceToken
+        End If
     End Sub
 
-    Private Sub lblResetToQB_Click(sender As Object, e As EventArgs) Handles lblResetToQB.Click
-        Dim ret As MsgBoxResult
-        ret = MsgBox("Восстановить исходную командную строку для qBittorrent?", MsgBoxStyle.Question + MsgBoxStyle.YesNo + MsgBoxStyle.DefaultButton2)
-        If ret = MsgBoxResult.No Then Exit Sub
-        txtTCCommandLine.Text = "%ClientPath% --skip-dialog=true %TorrentSource%"
+    Private Sub ResetExplicitClientCommand(sender As Object, e As EventArgs) Handles btnResetToTransmission.Click, btnResetToDeluge.Click
+        Dim executableName = If(sender Is btnResetToTransmission, "transmission-qt.exe", "deluge.exe")
+        Using dialog As New OpenFileDialog With {
+            .Title = $"Выберите {executableName}",
+            .FileName = executableName,
+            .Filter = "Исполняемые файлы (*.exe)|*.exe",
+            .CheckFileExists = True,
+            .RestoreDirectory = True
+        }
+            If dialog.ShowDialog(Me) <> DialogResult.OK Then Return
+            Dim template = clsTorrentClientCommand.CreateExplicitClientTemplate(dialog.FileName)
+            If template Is Nothing Then
+                MessageBox.Show(Me, "Укажите файл .exe, в пути к которому нет плейсхолдеров команды.", "Сброс команды",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return
+            End If
+            txtTCCommandLine.Text = template
+        End Using
     End Sub
 
     Private Sub UpdateClientCommandControls()
         txtTCCommandLine.Enabled = chkSendToClient.Checked AndAlso (chkRuTracker.Checked OrElse chkKinozal.Checked)
-        lblResetToUT.Enabled = txtTCCommandLine.Enabled
-        lblResetToQB.Enabled = txtTCCommandLine.Enabled
+        btnResetToUT.Enabled = txtTCCommandLine.Enabled
+        btnResetToQB.Enabled = txtTCCommandLine.Enabled
+        btnResetToTransmission.Enabled = txtTCCommandLine.Enabled
+        btnResetToDeluge.Enabled = txtTCCommandLine.Enabled
         lblTCCommandLineHelp.Visible = chkRuTracker.Checked OrElse chkKinozal.Checked
     End Sub
 

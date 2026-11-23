@@ -45,11 +45,13 @@ RuTracker: разделы Atom и magnet-ссылки
 
 | Плейсхолдер | Значение |
 | --- | --- |
-| `%ClientPath%` | Путь к программе из ассоциации текущего источника. Можно вместо плейсхолдера указать путь к `.exe` в кавычках. |
+| `%ClientPath%` | Путь к программе, назначенной в Windows по умолчанию для `MAGNET` или `.torrent`, в зависимости от источника. Можно вместо плейсхолдера указать путь к `.exe` в кавычках. |
 | `%TorrentSource%` | Magnet-ссылка RuTracker или путь к временному файлу `.torrent` Кинозала. |
 | `%TorrentName%` | Заголовок Atom или имя из `.torrent` с заменой недопустимых для пути символов. |
 
-Для qBittorrent кнопка сброса подставляет команду, которая скрывает диалог этого добавления. Глобальную настройку показа диалога можно оставить включённой для ручного добавления. [Параметры qBittorrent](https://github.com/qbittorrent/qBittorrent/blob/release-5.2.4/src/app/cmdoptions.cpp#L1852)
+Кнопки «Сброс» доступны, когда включена автоотправка и выбран хотя бы один трекер. Они заполняют поле команды, которое можно отредактировать перед сохранением правила.
+
+После подтверждения кнопки µTorrent Classic и qBittorrent подставляют шаблоны с `%ClientPath%`. Назначьте соответствующий клиент программой по умолчанию для нужного источника в Windows или укажите путь к его EXE в шаблоне. Кнопка qBittorrent подставляет команду, которая скрывает диалог при автоотправке. Глобальную настройку показа диалога можно оставить включённой для ручного добавления. [Параметры qBittorrent](https://github.com/qbittorrent/qBittorrent/blob/release-5.2.4/src/app/cmdoptions.cpp#L1852)
 
 ```text
 %ClientPath% --skip-dialog=true %TorrentSource%
@@ -60,6 +62,8 @@ RuTracker: разделы Atom и magnet-ссылки
 ```text
 %ClientPath% /DIRECTORY "D:\Загрузки" %TorrentSource%
 ```
+
+Для Transmission Qt выберите `transmission-qt.exe`, для Deluge GTK — `deluge.exe`. Кнопка подставит полный путь в кавычках и `%TorrentSource%`. Выбранный EXE будет использоваться для обоих источников независимо от настроек Windows. При отмене выбора в поле остаётся прежняя команда. [Transmission Qt](https://github.com/transmission/transmission/blob/main/qt/main.cc) · [Deluge GTK](https://github.com/deluge-torrent/deluge/blob/develop/deluge/ui/gtk3/__init__.py)
 
 В смешанном правиле оба источника используют одну команду. Проверьте, что её параметры подходят обоим источникам и клиентам, если в Windows назначены разные ассоциации. При загрузке старых настроек `%TorrentPath%` заменяется на `%TorrentSource%`, и в смешанных правилах прежняя команда Кинозала сразу применяется также к magnet-ссылкам RuTracker. Это касается и `/DIRECTORY`, для которого приём magnet в µTorrent Classic не подтверждён. Для старых правил только с RuTracker поле начинается пустым.
 

@@ -48,8 +48,10 @@ Partial Class frmKeyWord
         Me.Label2 = New System.Windows.Forms.Label()
         Me.tlpToolTip = New System.Windows.Forms.ToolTip(Me.components)
         Me.grpNotificationBox = New System.Windows.Forms.GroupBox()
-        Me.lblResetToQB = New System.Windows.Forms.Label()
-        Me.lblResetToUT = New System.Windows.Forms.Label()
+        Me.btnResetToUT = New System.Windows.Forms.Button()
+        Me.btnResetToQB = New System.Windows.Forms.Button()
+        Me.btnResetToTransmission = New System.Windows.Forms.Button()
+        Me.btnResetToDeluge = New System.Windows.Forms.Button()
         Me.lblTCCommandLineHelp = New System.Windows.Forms.Label()
         Me.txtTCCommandLine = New System.Windows.Forms.TextBox()
         Me.chkSendToClient = New System.Windows.Forms.CheckBox()
@@ -157,7 +159,7 @@ Partial Class frmKeyWord
         '
         'btnSave
         '
-        Me.btnSave.Location = New System.Drawing.Point(309, 533)
+        Me.btnSave.Location = New System.Drawing.Point(309, 568)
         Me.btnSave.Name = "btnSave"
         Me.btnSave.Size = New System.Drawing.Size(98, 26)
         Me.btnSave.TabIndex = 14
@@ -166,7 +168,7 @@ Partial Class frmKeyWord
         '
         'btnCancel
         '
-        Me.btnCancel.Location = New System.Drawing.Point(413, 533)
+        Me.btnCancel.Location = New System.Drawing.Point(413, 568)
         Me.btnCancel.Name = "btnCancel"
         Me.btnCancel.Size = New System.Drawing.Size(98, 26)
         Me.btnCancel.TabIndex = 15
@@ -300,40 +302,55 @@ Partial Class frmKeyWord
         '
         'grpNotificationBox
         '
-        Me.grpNotificationBox.AutoSize = True
-        Me.grpNotificationBox.Controls.Add(Me.lblResetToQB)
-        Me.grpNotificationBox.Controls.Add(Me.lblResetToUT)
+        Me.grpNotificationBox.Controls.Add(Me.btnResetToDeluge)
+        Me.grpNotificationBox.Controls.Add(Me.btnResetToTransmission)
+        Me.grpNotificationBox.Controls.Add(Me.btnResetToQB)
+        Me.grpNotificationBox.Controls.Add(Me.btnResetToUT)
         Me.grpNotificationBox.Controls.Add(Me.lblTCCommandLineHelp)
         Me.grpNotificationBox.Controls.Add(Me.txtTCCommandLine)
         Me.grpNotificationBox.Controls.Add(Me.chkSendToClient)
         Me.grpNotificationBox.Location = New System.Drawing.Point(12, 355)
         Me.grpNotificationBox.Name = "grpNotificationBox"
-        Me.grpNotificationBox.Size = New System.Drawing.Size(499, 172)
+        Me.grpNotificationBox.Size = New System.Drawing.Size(499, 207)
         Me.grpNotificationBox.TabIndex = 6
         Me.grpNotificationBox.TabStop = False
         Me.grpNotificationBox.Text = "Поведение"
         '
-        'lblResetToQB
+        'btnResetToUT
         '
-        Me.lblResetToQB.AutoSize = True
-        Me.lblResetToQB.Cursor = System.Windows.Forms.Cursors.Hand
-        Me.lblResetToQB.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, CType(204, Byte))
-        Me.lblResetToQB.Location = New System.Drawing.Point(116, 143)
-        Me.lblResetToQB.Name = "lblResetToQB"
-        Me.lblResetToQB.Size = New System.Drawing.Size(95, 13)
-        Me.lblResetToQB.TabIndex = 4
-        Me.lblResetToQB.Text = "Сброс (qBittorrent)"
+        Me.btnResetToUT.Location = New System.Drawing.Point(9, 141)
+        Me.btnResetToUT.Name = "btnResetToUT"
+        Me.btnResetToUT.Size = New System.Drawing.Size(175, 26)
+        Me.btnResetToUT.TabIndex = 14
+        Me.btnResetToUT.Text = "Сброс (µTorrent Classic)"
+        Me.btnResetToUT.UseVisualStyleBackColor = True
         '
-        'lblResetToUT
+        'btnResetToQB
         '
-        Me.lblResetToUT.AutoSize = True
-        Me.lblResetToUT.Cursor = System.Windows.Forms.Cursors.Hand
-        Me.lblResetToUT.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, CType(204, Byte))
-        Me.lblResetToUT.Location = New System.Drawing.Point(6, 143)
-        Me.lblResetToUT.Name = "lblResetToUT"
-        Me.lblResetToUT.Size = New System.Drawing.Size(87, 13)
-        Me.lblResetToUT.TabIndex = 3
-        Me.lblResetToUT.Text = "Сброс (uTorrent)"
+        Me.btnResetToQB.Location = New System.Drawing.Point(190, 141)
+        Me.btnResetToQB.Name = "btnResetToQB"
+        Me.btnResetToQB.Size = New System.Drawing.Size(175, 26)
+        Me.btnResetToQB.TabIndex = 15
+        Me.btnResetToQB.Text = "Сброс (qBittorrent)"
+        Me.btnResetToQB.UseVisualStyleBackColor = True
+        '
+        'btnResetToTransmission
+        '
+        Me.btnResetToTransmission.Location = New System.Drawing.Point(9, 173)
+        Me.btnResetToTransmission.Name = "btnResetToTransmission"
+        Me.btnResetToTransmission.Size = New System.Drawing.Size(175, 26)
+        Me.btnResetToTransmission.TabIndex = 16
+        Me.btnResetToTransmission.Text = "Сброс (Transmission Qt)"
+        Me.btnResetToTransmission.UseVisualStyleBackColor = True
+        '
+        'btnResetToDeluge
+        '
+        Me.btnResetToDeluge.Location = New System.Drawing.Point(190, 173)
+        Me.btnResetToDeluge.Name = "btnResetToDeluge"
+        Me.btnResetToDeluge.Size = New System.Drawing.Size(175, 26)
+        Me.btnResetToDeluge.TabIndex = 17
+        Me.btnResetToDeluge.Text = "Сброс (Deluge GTK)"
+        Me.btnResetToDeluge.UseVisualStyleBackColor = True
         '
         'lblTCCommandLineHelp
         '
@@ -342,7 +359,7 @@ Partial Class frmKeyWord
         Me.lblTCCommandLineHelp.Name = "lblTCCommandLineHelp"
         Me.lblTCCommandLineHelp.Size = New System.Drawing.Size(232, 13)
         Me.lblTCCommandLineHelp.TabIndex = 2
-        Me.lblTCCommandLineHelp.Text = "%ClientPath% - торрент-клиент по умолчанию"
+        Me.lblTCCommandLineHelp.Text = "%ClientPath% — путь к программе по умолчанию"
         '
         'txtTCCommandLine
         '
@@ -397,7 +414,7 @@ Partial Class frmKeyWord
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(96.0!, 96.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi
-        Me.ClientSize = New System.Drawing.Size(522, 563)
+        Me.ClientSize = New System.Drawing.Size(522, 598)
         Me.Controls.Add(Me.grpKWOptionsBox)
         Me.Controls.Add(Me.grpNotificationBox)
         Me.Controls.Add(Me.grpFiltersBox)
@@ -451,8 +468,10 @@ Partial Class frmKeyWord
     Friend WithEvents txtTCCommandLine As System.Windows.Forms.TextBox
     Friend WithEvents chkSendToClient As System.Windows.Forms.CheckBox
     Friend WithEvents lblTCCommandLineHelp As System.Windows.Forms.Label
-    Friend WithEvents lblResetToUT As System.Windows.Forms.Label
-    Friend WithEvents lblResetToQB As System.Windows.Forms.Label
+    Friend WithEvents btnResetToUT As System.Windows.Forms.Button
+    Friend WithEvents btnResetToQB As System.Windows.Forms.Button
+    Friend WithEvents btnResetToTransmission As System.Windows.Forms.Button
+    Friend WithEvents btnResetToDeluge As System.Windows.Forms.Button
     Friend WithEvents grpKWOptionsBox As System.Windows.Forms.GroupBox
     Friend WithEvents chkPause As System.Windows.Forms.CheckBox
     Friend WithEvents chkUniqueness As System.Windows.Forms.CheckBox

@@ -56,6 +56,16 @@ Friend Module clsTorrentClientCommand
         Return result.Append("\"c, slashes * 2).Append(""""c).ToString()
     End Function
 
+    Private Function IsLiteralExecutable(executable As String) As Boolean
+        Return Not String.IsNullOrWhiteSpace(executable) AndAlso Not Tokens.IsMatch(executable)
+    End Function
+
+    Friend Function CreateExplicitClientTemplate(executable As String) As String
+        If Not IsLiteralExecutable(executable) OrElse
+            Not String.Equals(IO.Path.GetExtension(executable), ".exe", StringComparison.OrdinalIgnoreCase) Then Return Nothing
+        Return QuoteArgument(executable) & " " & SourceToken
+    End Function
+
     Friend Function CreateClientStartInfo(command As String, source As String, torrentName As String, association As String,
                                           resolve As Func(Of String, String)) As ProcessStartInfo
         If String.IsNullOrWhiteSpace(command) Then Return New ProcessStartInfo(source) With {.UseShellExecute = True}
@@ -74,7 +84,7 @@ Friend Module clsTorrentClientCommand
             End Function
         If String.Equals(executable, ClientToken, StringComparison.OrdinalIgnoreCase) Then
             executable = getClientPath()
-        ElseIf String.IsNullOrWhiteSpace(executable) OrElse Tokens.IsMatch(executable) Then
+        ElseIf Not IsLiteralExecutable(executable) Then
             Throw New FormatException("Укажите программу торрент-клиента или %ClientPath% в начале команды.")
         End If
 

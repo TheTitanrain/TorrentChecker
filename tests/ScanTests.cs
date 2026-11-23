@@ -274,23 +274,70 @@ public static class ScanTests
             Invoke(editor, "ResetFields");
             var command = (TextBox)Get(editor, "txtTCCommandLine");
             var label = (TextBox)Get(editor, "txtKeyWordLabel");
+            var send = (CheckBox)Get(editor, "chkSendToClient");
+            var help = (Label)Get(editor, "lblTCCommandLineHelp");
+            var presets = new[] { "btnResetToUT", "btnResetToQB", "btnResetToTransmission", "btnResetToDeluge" }
+                .Select(name => (Button)Get(editor, name)).ToArray();
+            var ruTracker = (CheckBox)Get(editor, "chkRuTracker");
+            var kinozalTracker = (CheckBox)Get(editor, "chkKinozal");
             label.Text = "New command rule";
             Check(command.Text == "" && !command.Enabled, "new rule starts with a blank disabled command");
+            Check(presets.All(button => !button.Enabled), "client preset buttons are disabled without a tracker");
             var kinozal = (Dictionary<object, object>)mdlMain.TrackerParams[mdlMain.Trackers.kinozal];
             kinozal["credentials"] = new Dictionary<string, string> { { "username", "test" } };
-            ((CheckBox)Get(editor, "chkKinozal")).Checked = true;
-            ((CheckBox)Get(editor, "chkSendToClient")).Checked = true;
-            Check(command.Enabled, "Kinozal enables shared command");
+            kinozalTracker.Checked = true;
+            Check(presets.All(button => !button.Enabled), "client preset buttons require automatic sending");
+            send.Checked = true;
+            Check(command.Enabled && presets.All(button => button.Enabled), "Kinozal enables shared command and preset buttons");
+
+            Control position = command;
+            var group = command.Parent;
+            group.PerformLayout();
+            foreach (var button in presets)
+            {
+                Check(button.TabStop && group.GetNextControl(position, true) == button, "preset buttons follow the command in tab order");
+                Check(group.ClientRectangle.Contains(button.Bounds) && button.Top >= help.Bottom &&
+                    button.PreferredSize.Width <= button.Width && button.PreferredSize.Height <= button.Height &&
+                    !presets.Any(other => other != button && other.Bounds.IntersectsWith(button.Bounds)), "preset button and caption fit below command help");
+                position = button;
+            }
+            Check(help.Right <= group.ClientSize.Width, "command help fits inside the behavior section: " + help.Bounds + ", " + group.ClientSize);
+            var save = (Button)Get(editor, "btnSave");
+            Check(group.Bottom <= save.Top, "behavior section fits above Save: " + group.Bounds + ", " + save.Bounds);
+            Check(editor.ClientRectangle.Contains(group.Bounds), "behavior section fits inside the editor");
             Invoke(editor, "btnSave_Click", null, EventArgs.Empty);
             Check(mdlMain.KeyWordsParams[2][ClientCommandKey] == "", "Kinozal rule saves blank command");
 
-            ((CheckBox)Get(editor, "chkRuTracker")).Checked = true;
-            command.Text = "%ClientPath% %TorrentSource%";
+            ruTracker.Checked = true;
+            command.Text = @"""C:\Portable Apps\Торренты\deluge.EXE"" %TorrentSource%";
             Invoke(editor, "btnSave_Click", null, EventArgs.Empty);
-            Check(command.Enabled && mdlMain.KeyWordsParams[3][ClientCommandKey] == command.Text, "mixed rule saves one short command");
-            ((CheckBox)Get(editor, "chkKinozal")).Checked = false;
-            Check(command.Enabled, "RuTracker-only rule enables the same command");
+            Check(command.Enabled && mdlMain.KeyWordsParams[3][ClientCommandKey] == command.Text,
+                "mixed rule saves the quoted explicit client command");
+            kinozalTracker.Checked = false;
+            Check(command.Enabled && presets.All(button => button.Enabled), "RuTracker-only rule enables the same command and presets");
+            ruTracker.Checked = false;
+            Check(!command.Enabled && presets.All(button => !button.Enabled), "automatic sending still requires a tracker for client presets");
+            ruTracker.Checked = true;
+            send.Checked = false;
+            Check(!command.Enabled && presets.All(button => !button.Enabled), "turning off automatic sending disables the command and presets");
         }
+    }
+
+    static void CheckExplicitClientTemplate()
+    {
+        var makeTemplate = CommandModule.GetMethod("CreateExplicitClientTemplate", Static);
+        string executable = @"C:\Portable Apps\Торренты\deluge.EXE";
+        var template = (string)makeTemplate.Invoke(null, new object[] { executable });
+        var createStartInfo = CommandModule.GetMethod("CreateClientStartInfo", Static);
+        Func<string, string> unexpectedResolver = association => { throw new Exception("Explicit client must skip association lookup"); };
+        foreach (var source in new[] { Magnet, @"C:\Temporary Files\test.torrent" })
+        {
+            string association = source == Magnet ? "magnet" : ".torrent";
+            var info = (ProcessStartInfo)createStartInfo.Invoke(null, new object[] { template, source, "Test", association, unexpectedResolver });
+            Check(info.FileName == executable && ReadArguments(info).SequenceEqual(new[] { source }), "explicit preset passes the complete source to the chosen executable");
+        }
+        Check(makeTemplate.Invoke(null, new object[] { @"C:\Apps\%TorrentName%\deluge.exe" }) == null &&
+            makeTemplate.Invoke(null, new object[] { @"C:\Apps\deluge.txt" }) == null, "explicit presets reject incompatible paths and non-executable files");
     }
 
     static void CheckMissingClientAssociation()
@@ -314,6 +361,7 @@ public static class ScanTests
         CheckMixedClientCommand();
         CheckClientArgumentsAndFileErrors();
         CheckRuleCommandEditor();
+        CheckExplicitClientTemplate();
         CheckMissingClientAssociation();
         using (var f = new Fixture(1))
         {
