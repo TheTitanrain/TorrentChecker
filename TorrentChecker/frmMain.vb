@@ -7,7 +7,9 @@ Public Class frmMain
     Private ReadOnly openMagnetMenu As New ToolStripMenuItem()
     Private HTTP As New clsHTTP
     Private HTTPUpdate As New clsHTTP
-    Private HTTPUpdateResult As clsHTTP.HTTPResult
+    Private updateCheckRunning As Boolean
+    Private updateStatus As String = "Обновлений нет"
+    Private showUpdateStatus As Boolean
     Private bsrcFoundTorrents As New BindingSource
     Private unread_errors_count As Integer = 0
     Private CaptchaParams As New Dictionary(Of String, Object) From
@@ -36,7 +38,6 @@ Public Class frmMain
             ctrl.Font = FONT_NORMAL
         Next
 
-        lblShowNewVersion.Font = FONT_UNDERLINE
         msiNewPM.Font = FONT_BOLD
         msiPM_ru.Font = FONT_NORMAL
         msiPM_kz.Font = FONT_NORMAL
@@ -75,13 +76,14 @@ Public Class frmMain
         msiPause.Text = UiText.T("Приостановить проверку")
         msiHelp.Text = UiText.T("Помощь")
         msiAbout.Text = UiText.T("О программе")
+        msiCheckUpdates.Text = UiText.T("Проверить обновления")
         msiNewPM.Text = UiText.T("У вас есть новые ЛС!")
         msiPM_ru.Text = UiText.T("Рутрекер")
         msiPM_kz.Text = UiText.T("Кинозал")
         cmsiHide.Text = UiText.T("Скрыть в трей")
         сmsiPause.Text = UiText.T("Приостановить проверку")
         сmsiExit.Text = UiText.T("Выход")
-        lblShowNewVersion.Text = UiText.T("Обновлений нет")
+        RenderUpdateStatus()
         openMagnetMenu.Text = UiText.T("Открыть magnet в торрент-клиенте")
     End Sub
 
@@ -109,9 +111,6 @@ Public Class frmMain
             tmrLastCheck_Tick(Me, EventArgs.Empty)
         ElseIf activeScanGeneration > 0 Then
             tssLabel.Text = UiText.T("Идет проверка...")
-        End If
-        If availableVersion IsNot Nothing Then
-            lblShowNewVersion.Text = String.Format(UiText.T("Доступна новая версия: {0}. Текущая версия: {1}"), availableVersion, APP_VERSION)
         End If
         trayIconPM.Text = APP_NAME & vbCrLf & UiText.T("Eсть новые персональные сообщения!")
         If tmrTray.Enabled Then trayIcon.Text = APP_NAME & vbCrLf & UiText.T("Найдены новые торренты!")
@@ -1838,53 +1837,84 @@ Public Class frmMain
         If Not dgvKeyWords.Focused AndAlso dgvKeyWords.CanFocus Then dgvKeyWords.Focus()
     End Sub
 
-    Private Shared Function IsNewerVersion(candidate As String, current As String) As Boolean
-        Dim versions As New List(Of Version)
-        For Each value As String In New String() {candidate, current}
-            If String.IsNullOrWhiteSpace(value) Then Return False
-            value = value.Trim()
-            If value.StartsWith("v", StringComparison.OrdinalIgnoreCase) Then value = value.Substring(1)
-
-            Dim parsed As Version = Nothing
-            If Not Version.TryParse(value, parsed) Then Return False
-            ' Missing build/revision components are equivalent to zero.
-            versions.Add(New Version(parsed.Major, parsed.Minor, Math.Max(0, parsed.Build), Math.Max(0, parsed.Revision)))
-        Next
-        Return versions(0).CompareTo(versions(1)) > 0
+    Private Shared Function TryParseReleaseVersion(value As String, ByRef parsed As Version) As Boolean
+        If String.IsNullOrWhiteSpace(value) Then Return False
+        value = value.Trim()
+        If value.StartsWith("v", StringComparison.OrdinalIgnoreCase) Then value = value.Substring(1)
+        If Not Version.TryParse(value, parsed) Then Return False
+        ' Missing build/revision components are equivalent to zero.
+        parsed = New Version(parsed.Major, parsed.Minor, Math.Max(0, parsed.Build), Math.Max(0, parsed.Revision))
+        Return True
     End Function
 
-    Private Async Sub CheckLatestUpdate()
-        Try
-            If Not AppOptions("check_for_updates") Then Exit Sub
+    Private Shared Function IsNewerVersion(candidate As String, current As String) As Boolean
+        Dim candidateVersion As Version = Nothing, currentVersion As Version = Nothing
+        Return TryParseReleaseVersion(candidate, candidateVersion) AndAlso
+            TryParseReleaseVersion(current, currentVersion) AndAlso candidateVersion.CompareTo(currentVersion) > 0
+    End Function
 
-            HTTPUpdate.Cancel()
-
-            HTTPUpdate.ConfigureProxy(ProxySettings, ProxyCredential)
-
-            HTTPUpdateResult = Await HTTPUpdate.HTTPGet(AppRepository("repository_api"))
-            If HTTPUpdateResult.Success Then
-                If HTTPUpdateResult.Result.Length <> 0 Then
-                    Dim tag_name As String = Regex.Match(HTTPUpdateResult.Result, """tag_name"":""(.+?)""", RegexOptions.IgnoreCase, REGEX_TIMEOUT).Groups(1).Value
-                    If IsNewerVersion(tag_name, APP_VERSION) Then
-                        availableVersion = tag_name
-                        lblShowNewVersion.Visible = True
-                        lblShowNewVersion.Text = String.Format(UiText.T("Доступна новая версия: {0}. Текущая версия: {1}"), tag_name, APP_VERSION)
-                    Else
-                        availableVersion = Nothing
-                        lblShowNewVersion.Visible = False
-                    End If
-                End If
-            End If
-        Catch ex As Exception
-            LogOutput(String.Format("{0}: {1}", UiText.T("Ошибка проверки обновлений"), GetProperExceptionText(ex)))
-        End Try
+    Private Sub RenderUpdateStatus()
+        Dim hasUpdate = availableVersion IsNot Nothing
+        lblShowNewVersion.Text = If(hasUpdate,
+            String.Format(UiText.T("Доступна новая версия: {0}. Текущая версия: {1}"), availableVersion, APP_VERSION),
+            UiText.T(updateStatus))
+        lblShowNewVersion.Visible = hasUpdate OrElse showUpdateStatus
+        lblShowNewVersion.Cursor = If(hasUpdate, Cursors.Hand, Cursors.Default)
+        lblShowNewVersion.Font = If(hasUpdate, FONT_UNDERLINE, FONT_NORMAL)
     End Sub
+
+    Private Async Sub CheckLatestUpdate()
+        Await CheckLatestUpdateAsync(False)
+    End Sub
+
+    Private Async Sub msiCheckUpdates_Click(sender As Object, e As EventArgs) Handles msiCheckUpdates.Click
+        Await CheckLatestUpdateAsync(True)
+    End Sub
+
+    Private Async Function CheckLatestUpdateAsync(force As Boolean) As Task
+        If isFormQueryToUnload OrElse IsDisposed OrElse Disposing OrElse updateCheckRunning Then Return
+        If Not force AndAlso Not CBool(AppOptions("check_for_updates")) Then Return
+
+        updateCheckRunning = True
+        msiCheckUpdates.Enabled = False
+        availableVersion = Nothing
+        updateStatus = "Проверка обновлений..."
+        showUpdateStatus = force
+        RenderUpdateStatus()
+        Try
+            HTTPUpdate.ConfigureProxy(ProxySettings, ProxyCredential)
+            Dim response = Await HTTPUpdate.HTTPGet(AppRepository("repository_api"), requireSuccessStatus:=True)
+            If isFormQueryToUnload OrElse IsDisposed OrElse Disposing Then Return
+            If Not response.Success Then Throw New InvalidOperationException(UiText.T("Некорректный ответ сервера обновлений."))
+
+            Dim release = TryCast(New System.Web.Script.Serialization.JavaScriptSerializer().DeserializeObject(response.Result), Dictionary(Of String, Object))
+            Dim tag As Object = Nothing
+            Dim parsed As Version = Nothing
+            If release Is Nothing OrElse Not release.TryGetValue("tag_name", tag) OrElse
+                Not TypeOf tag Is String OrElse Not TryParseReleaseVersion(CStr(tag), parsed) Then
+                Throw New InvalidOperationException(UiText.T("Некорректный ответ сервера обновлений."))
+            End If
+            If IsNewerVersion(CStr(tag), APP_VERSION) Then availableVersion = CStr(tag)
+            updateStatus = "Обновлений нет"
+            RenderUpdateStatus()
+        Catch ex As Exception
+            If isFormQueryToUnload OrElse IsDisposed OrElse Disposing Then Return
+            availableVersion = Nothing
+            updateStatus = "Ошибка проверки обновлений"
+            RenderUpdateStatus()
+            LogOutput(String.Format("{0}: {1}", UiText.T("Ошибка проверки обновлений"), GetProperExceptionText(ex)))
+        Finally
+            updateCheckRunning = False
+            If Not isFormQueryToUnload AndAlso Not IsDisposed AndAlso Not Disposing Then msiCheckUpdates.Enabled = True
+        End Try
+    End Function
 
     Private Sub tmrCheckUpdate_Tick(sender As Object, e As EventArgs) Handles tmrCheckUpdate.Tick
         CheckLatestUpdate()
     End Sub
 
     Private Sub lblShowNewVersion_Click(sender As Object, e As EventArgs) Handles lblShowNewVersion.Click
+        If availableVersion Is Nothing Then Return
         'open browser with the repository
 
         Try

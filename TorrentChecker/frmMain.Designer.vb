@@ -83,6 +83,7 @@ Partial Class frmMain
         Me.msiPause = New System.Windows.Forms.ToolStripMenuItem()
         Me.msiHelp = New System.Windows.Forms.ToolStripMenuItem()
         Me.msiAbout = New System.Windows.Forms.ToolStripMenuItem()
+        Me.msiCheckUpdates = New System.Windows.Forms.ToolStripMenuItem()
         Me.msiNewPM = New System.Windows.Forms.ToolStripMenuItem()
         Me.msiPM_ru = New System.Windows.Forms.ToolStripMenuItem()
         Me.msiPM_kz = New System.Windows.Forms.ToolStripMenuItem()
@@ -552,7 +553,7 @@ Partial Class frmMain
         '
         'msiHelp
         '
-        Me.msiHelp.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.msiAbout})
+        Me.msiHelp.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.msiCheckUpdates, Me.msiAbout})
         Me.msiHelp.Name = "msiHelp"
         Me.msiHelp.Size = New System.Drawing.Size(68, 20)
         '
@@ -560,6 +561,8 @@ Partial Class frmMain
         '
         Me.msiAbout.Name = "msiAbout"
         Me.msiAbout.Size = New System.Drawing.Size(271, 22)
+        Me.msiCheckUpdates.Name = "msiCheckUpdates"
+        Me.msiCheckUpdates.Size = New System.Drawing.Size(271, 22)
         '
         'msiNewPM
         '
@@ -792,6 +795,7 @@ Partial Class frmMain
     Friend WithEvents cmsTorrentColumns As System.Windows.Forms.ContextMenuStrip
     Friend WithEvents msiHelp As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents msiAbout As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents msiCheckUpdates As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents tmrCheckUpdate As Timer
     Friend WithEvents lblShowNewVersion As Label
     Friend WithEvents msiNewPM As ToolStripMenuItem
