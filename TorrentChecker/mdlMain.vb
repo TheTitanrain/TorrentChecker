@@ -385,42 +385,19 @@ Public Module mdlMain
         pi.SetValue(obj, True, Nothing)
     End Sub
 
-    Public Function GetAssociatedProgram(ByVal file_extension As String) As String
-        'returns the application associated with the specified extension
-        Dim strExtValue As String
-        Dim SplitArray() As String
+    Public Function GetTorrentName(ByVal torrent_body As Byte()) As String
         Try
-            'Open registry areas containing launching app details
-            Using objExtReg As Microsoft.Win32.RegistryKey = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(file_extension)
-                strExtValue = objExtReg.GetValue("")
-                Using objAppReg As Microsoft.Win32.RegistryKey = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(strExtValue & "\shell\open\command")
-                    'Parse out, tidy up and return result
-                    SplitArray = Split(objAppReg.GetValue(Nothing), """")
-
-                    If Trim(SplitArray(0)).Length > 0 Then
-                        Return SplitArray(0).Replace("%1", "")
-                    Else
-                        Return SplitArray(1).Replace("%1", "")
-                    End If
-                End Using
-            End Using
+            Return SanitizeTorrentName(New clsTorrentNameReader(torrent_body).ReadName())
         Catch ex As Exception
             Return ""
         End Try
     End Function
 
-    Public Function GetTorrentName(ByVal torrent_body As Byte()) As String
-        Try
-            Dim torrent_name As String = New clsTorrentNameReader(torrent_body).ReadName()
-
-            'cleaning, if any
-            Dim pattern As String = New String(Path.GetInvalidFileNameChars())
-            torrent_name = Regex.Replace(torrent_name, String.Format("[{0}]", Regex.Escape(pattern)), "_", RegexOptions.IgnoreCase, REGEX_TIMEOUT)
-
-            Return torrent_name
-        Catch ex As Exception
-            Return ""
-        End Try
+    Friend Function SanitizeTorrentName(name As String) As String
+        Dim invalid = Path.GetInvalidFileNameChars()
+        Dim cleaned = New String(name.Select(Function(character) If(invalid.Contains(character), "_"c, character)).ToArray())
+        If cleaned.TrimEnd("."c, " "c).Length = 0 AndAlso cleaned.Length > 0 Then Return "_"
+        Return cleaned
     End Function
 
     Public Function GetProperExceptionText(ex As Exception) As String

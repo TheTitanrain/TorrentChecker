@@ -10,10 +10,11 @@ Public Class frmKeyWord
         chkRuTracker.Text = TrackerParams(Trackers.rutracker)("tracker_name")
         chkKinozal.Text = TrackerParams(Trackers.kinozal)("tracker_name")
 
-        lblTCCommandLineHelp.Text = "Для .torrent-файлов Кинозала:"
-        lblTCCommandLineHelp.Text &= vbCrLf & "%ClientPath% - торрент-клиент по умолчанию"
-        lblTCCommandLineHelp.Text &= vbCrLf & "%TorrentName% - имя торрент-файла"
-        lblTCCommandLineHelp.Text &= vbCrLf & "%TorrentPath% - путь к скачанному торрент-файлу"
+        lblTCCommandLineHelp.Text = "Пустое поле — клиент Windows по умолчанию."
+        lblTCCommandLineHelp.Text &= vbCrLf & "%ClientPath% — программа для magnet или .torrent"
+        lblTCCommandLineHelp.Text &= vbCrLf & "%TorrentName% — название раздачи"
+        lblTCCommandLineHelp.Text &= vbCrLf & "%TorrentSource% — magnet-ссылка или путь к .torrent"
+        tlpToolTip.SetToolTip(chkSendToClient, "В смешанном правиле оба трекера используют одну команду. Параметры должны подходить обоим источникам.")
 
         For Each ctrl As Control In Me.Controls
             ctrl.Font = FONT_NORMAL
@@ -99,7 +100,7 @@ Public Class frmKeyWord
         chkPause.Checked = False
         chkSendToClient.Checked = False
         UpdateClientCommandControls()
-        txtTCCommandLine.Text = "%ClientPath% /directory ""C:\PathToSave\%TorrentName%"" %TorrentPath%"
+        txtTCCommandLine.Clear()
     End Sub
     Private Sub frmKeyWord_KeyDown(sender As Object, e As KeyEventArgs) Handles Me.KeyDown
         If e.KeyCode = Keys.Escape Then Me.Hide()
@@ -137,7 +138,7 @@ Public Class frmKeyWord
             chkPause.Checked = CBool(KeyWordsParams(idx)("paused"))
             'behavior
             chkSendToClient.Checked = CBool(KeyWordsParams(idx)("send_to_client"))
-            txtTCCommandLine.Text = KeyWordsParams(idx)("client_command_line")
+            txtTCCommandLine.Text = KeyWordsParams(idx)(clsTorrentClientCommand.CommandKey)
 
         End If
 
@@ -185,7 +186,7 @@ Public Class frmKeyWord
             kw_prop.Add("paused", chkPause.Checked.ToString)
             'behavior
             kw_prop.Add("send_to_client", chkSendToClient.Checked.ToString)
-            kw_prop.Add("client_command_line", txtTCCommandLine.Text)
+            kw_prop.Add(clsTorrentClientCommand.CommandKey, txtTCCommandLine.Text)
 
             KeyWordsParams.Add(new_idx, kw_prop)
         Else
@@ -212,7 +213,7 @@ Public Class frmKeyWord
             KeyWordsParams(idx)("paused") = chkPause.Checked.ToString
             'behavior
             KeyWordsParams(idx)("send_to_client") = chkSendToClient.Checked.ToString
-            KeyWordsParams(idx)("client_command_line") = txtTCCommandLine.Text
+            KeyWordsParams(idx)(clsTorrentClientCommand.CommandKey) = txtTCCommandLine.Text
         End If
 
         Me.Hide()
@@ -371,13 +372,6 @@ Public Class frmKeyWord
             Return False
         End If
 
-        If chkSendToClient.Checked AndAlso chkKinozal.Checked AndAlso txtTCCommandLine.TextLength < 40 Then
-            MsgBox("Командная строка для торрент-клиента слишком короткая! Пожалуйста, проверьте корректность написания", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
-            txtTCCommandLine.SelectAll()
-            txtTCCommandLine.Focus()
-            Return False
-        End If
-
         Return True
     End Function
 
@@ -419,26 +413,21 @@ Public Class frmKeyWord
         Dim ret As MsgBoxResult
         ret = MsgBox("Восстановить исходную командную строку для uTorrent?", MsgBoxStyle.Question + MsgBoxStyle.YesNo + MsgBoxStyle.DefaultButton2)
         If ret = MsgBoxResult.No Then Exit Sub
-        txtTCCommandLine.Text = "%ClientPath% /directory ""C:\PathToSave\%TorrentName%"" %TorrentPath%"
+        txtTCCommandLine.Text = "%ClientPath% %TorrentSource%"
     End Sub
 
     Private Sub lblResetToQB_Click(sender As Object, e As EventArgs) Handles lblResetToQB.Click
         Dim ret As MsgBoxResult
         ret = MsgBox("Восстановить исходную командную строку для qBittorrent?", MsgBoxStyle.Question + MsgBoxStyle.YesNo + MsgBoxStyle.DefaultButton2)
         If ret = MsgBoxResult.No Then Exit Sub
-        txtTCCommandLine.Text = "%ClientPath% --save-path=""C:\PathToSave"" --skip-dialog=true %TorrentPath%"
+        txtTCCommandLine.Text = "%ClientPath% --skip-dialog=true %TorrentSource%"
     End Sub
 
     Private Sub UpdateClientCommandControls()
-        txtTCCommandLine.Enabled = chkSendToClient.Checked AndAlso chkKinozal.Checked
+        txtTCCommandLine.Enabled = chkSendToClient.Checked AndAlso (chkRuTracker.Checked OrElse chkKinozal.Checked)
         lblResetToUT.Enabled = txtTCCommandLine.Enabled
         lblResetToQB.Enabled = txtTCCommandLine.Enabled
-        lblTCCommandLineHelp.Visible = chkKinozal.Checked
-        tlpToolTip.SetToolTip(chkSendToClient, "RuTracker отправляет magnet-ссылку приложению по умолчанию в Windows. Командная строка используется для .torrent-файлов Кинозала.")
-    End Sub
-
-    Private Sub txtTCCommandLine_LostFocus(sender As Object, e As EventArgs) Handles txtTCCommandLine.LostFocus
-        txtTCCommandLine.Text.Trim()
+        lblTCCommandLineHelp.Visible = chkRuTracker.Checked OrElse chkKinozal.Checked
     End Sub
 
     Private Sub txtKeyWordLabel_LostFocus(sender As Object, e As EventArgs) Handles txtKeyWordLabel.LostFocus

@@ -19,7 +19,8 @@ Public Class frmMain
         }
     Private activeScanGeneration As Long
     Friend ScanSaveSettings As Action = Sub() SaveSettings()
-    Friend ScanOpenMagnet As Action(Of String) = AddressOf OpenMagnet
+    Friend StartTorrentClient As Action(Of ProcessStartInfo) = Sub(info) Process.Start(info)?.Dispose()
+    Friend ResolveClient As Func(Of String, String) = AddressOf clsTorrentClientCommand.ResolveTorrentClient
     Private isFormLoaded As Boolean = False
     Private isFormQueryToUnload As Boolean = False
 
@@ -496,7 +497,7 @@ Public Class frmMain
                         End If
                     End If
 
-                    'download the torrent-file
+                    ' Send the magnet or download the torrent file for the client.
                     If KeyWordsParams.ContainsKey(params_idx) AndAlso CBool(KeyWordsParams(params_idx)("send_to_client")) Then
                         For Each dr As DataRow In new_torrents_dt.Select(Columns.torrent_dl.ToString & "<>''")
                             Dim tracker_id As Trackers = dr(Columns.tracker_id.ToString)
@@ -504,17 +505,18 @@ Public Class frmMain
                             Try
                                 If KeyWordsParams.ContainsKey(params_idx) AndAlso CBool(KeyWordsParams(params_idx)("send_to_client")) Then 'user can change/delete the option/keyword at any time
                                     Dim download As String = CStr(dr(Columns.torrent_dl.ToString))
+                                    Dim command As String = Nothing
+                                    KeyWordsParams(params_idx).TryGetValue(clsTorrentClientCommand.CommandKey, command)
                                     If tracker_id = Trackers.rutracker Then
-                                        ScanOpenMagnet(download)
+                                        OpenMagnet(download, command, SanitizeTorrentName(dr(Columns.topic_name.ToString).ToString()))
                                         Continue For
                                     End If
-                                    Dim command_line As String = KeyWordsParams(params_idx)("client_command_line")
                                     HTTPResult = Await HTTP.HTTPGet(TrackerParams(tracker_id)("download_url") & download, Nothing, True)
                                     If Not IsCurrentScan(generation, cts) Then Return
 
                                     If HTTPResult.Success Then
                                         ProcessTorrentDownload(HTTPResult, tracker_id.ToString,
-                                            Sub(body) SaveTorrent(body, command_line, tracker_name),
+                                            Sub(body) SaveTorrent(body, command, tracker_name),
                                             Sub(message, body) LogOutput(message, True, body))
                                     Else
                                         Exit For
@@ -614,9 +616,9 @@ Public Class frmMain
         Next
     End Function
 
-    Private Sub OpenMagnet(magnet As String)
+    Private Sub OpenMagnet(magnet As String, Optional command As String = Nothing, Optional torrentName As String = "")
         If clsRuTrackerAtom.MagnetHash(magnet) = "" Then Throw New FormatException("Некорректная magnet-ссылка RuTracker.")
-        Process.Start(New ProcessStartInfo(magnet) With {.UseShellExecute = True})
+        StartTorrentClient(clsTorrentClientCommand.CreateClientStartInfo(command, magnet, torrentName, "magnet", ResolveClient))
     End Sub
 
     Friend Shared Sub ProcessTorrentDownload(result As clsHTTP.HTTPResult, tracker As String,
@@ -632,48 +634,37 @@ Public Class frmMain
         End If
     End Sub
 
-    Private Sub SaveTorrent(ByVal torrent_body As Byte(), ByVal command_line As String, ByVal tracker_name As String)
-        Dim default_torrent_client As String
-        Dim tmp_filename As String = Path.GetTempFileName()
-        Dim torrent_name As String = GetTorrentName(torrent_body)
-
-        If torrent_name = "" Then
+    Private Sub SaveTorrent(torrentBody As Byte(), command As String, tracker_name As String)
+        Dim torrentName = GetTorrentName(torrentBody)
+        If torrentName = "" Then
             LogOutput(String.Format("{0} с {1}: {2}", "Ошибка торрент-файла", tracker_name, "неверное имя"))
-            Exit Sub
+            Return
         End If
 
+        Dim torrentPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") & ".torrent")
+        Dim info = clsTorrentClientCommand.CreateClientStartInfo(command, torrentPath, torrentName, ".torrent", ResolveClient)
+        Dim created As Boolean = False
+        Dim sent As Boolean = False
         Try
-            'write torrent-file
-            Using stream As Stream = File.Open(tmp_filename, FileMode.OpenOrCreate)
-                Using writer As BinaryWriter = New BinaryWriter(stream)
-                    writer.Write(torrent_body)
+            Try
+                Using stream As New FileStream(torrentPath, FileMode.CreateNew, FileAccess.Write, FileShare.None)
+                    created = True
+                    stream.Write(torrentBody, 0, torrentBody.Length)
                 End Using
-            End Using
-        Catch ex As Exception
-            LogOutput(String.Format("{0} с {1}: {2}", "Ошибка записи при сохранении торрент-файла", tracker_name, GetProperExceptionText(ex)))
-        End Try
-
-        'check command line
-        Try
-            command_line = Replace(command_line, "%TorrentPath%", Chr(34) & tmp_filename & Chr(34))
-            command_line = Replace(command_line, "%TorrentName%", torrent_name)
-            If InStr(command_line, "%ClientPath%", CompareMethod.Text) <> 0 Then
-                'send to default torrent-client
-                default_torrent_client = GetAssociatedProgram(".torrent")
-                If default_torrent_client <> "" Then
-                    command_line = Replace(command_line, "%ClientPath%", Chr(34) & default_torrent_client & Chr(34))
-
-                    Shell(command_line, AppWinStyle.NormalNoFocus)
-                Else
-                    LogOutput(String.Format("{0} с {1}: {2}", "Ошибка передачи торрент-файла", tracker_name, "не могу найти программу, ассоциированную с расширением .torrent"))
-                End If
-
-            Else
-                'execute command line 'as is'
-                Shell(command_line, AppWinStyle.NormalNoFocus)
+            Catch ex As Exception
+                LogOutput("Ошибка записи при сохранении торрент-файла (" & tracker_name & "): " & GetProperExceptionText(ex))
+                Return
+            End Try
+            StartTorrentClient(info)
+            sent = True
+        Finally
+            If created AndAlso Not sent Then
+                Try
+                    File.Delete(torrentPath)
+                Catch cleanup As Exception When TypeOf cleanup Is IOException OrElse TypeOf cleanup Is UnauthorizedAccessException
+                    LogOutput("Не удалось удалить временный торрент-файл: " & GetProperExceptionText(cleanup))
+                End Try
             End If
-        Catch ex As Exception
-            LogOutput(String.Format("{0} с {1}: {2}", "Ошибка передачи торрент-файла в торрент-клиент", tracker_name, GetProperExceptionText(ex)))
         End Try
     End Sub
 

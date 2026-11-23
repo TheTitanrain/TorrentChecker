@@ -119,6 +119,7 @@
     </Compile>
     <Compile Include="clsParse.vb" />
     <Compile Include="clsRuTrackerAtom.vb" />
+    <Compile Include="clsTorrentClientCommand.vb" />
     <Compile Include="clsTorrentNameReader.vb" />
     <Compile Include="frmAppOptions.Designer.vb">
       <DependentUpon>frmAppOptions.vb</DependentUpon>

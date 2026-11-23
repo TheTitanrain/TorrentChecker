@@ -178,15 +178,23 @@ try {
 
     $fixture = New-Object 'System.Collections.Generic.Dictionary[string,object]'
     $rules = New-Object 'System.Collections.Generic.Dictionary[int,System.Collections.Generic.Dictionary[string,string]]'
-    foreach ($id in @(0, 7, 2)) {
+    $legacyClientCommand = '%ClientPath% /directory "C:\PathToSave\%TorrentName%" %TorrentPath%'
+    $newClientCommand = $legacyClientCommand.Replace('%TorrentPath%', '%TorrentSource%')
+    $literalClientCommand = '"C:\Program Files\Client\client.exe" --start'
+    foreach ($id in @(0, 7, 2, 9)) {
         $rule = New-Object 'System.Collections.Generic.Dictionary[string,string]'
         $rule.Add('label', ('Rule ' + $id + ' { "quote" \\ slash }'))
         $rule.Add('count_of_new', $(if ($id -eq 2) { '-1' } else { '2' }))
         $rule.Add('paused', 'False')
+        if ($id -ne 0) {
+            $rule.Add('rutracker', ($id -ne 9).ToString())
+            $rule.Add('kinozal', ($id -ne 2).ToString())
+            $rule.Add('client_command_line', $(if ($id -eq 9) { $literalClientCommand } else { $legacyClientCommand }))
+        }
         $rules.Add($id, $rule)
     }
     $fixture.Add('KeyWordsParams', $rules)
-    $fixture.Add('KwListToParamsMapping', [int[]]@(0, 7, 2))
+    $fixture.Add('KwListToParamsMapping', [int[]]@(0, 7, 2, 9))
     $fixture.Add('CHECK_INTERVAL', 29000)
     $fixture.Add('TORRENTS_MAX_RESULTS', [int16]200)
     $fixture.Add('TORRENTS_MAX_STORETIME', [long]20000000001)
@@ -269,8 +277,26 @@ try {
     $manifest = Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json
     $initialManifest = $manifest
     Assert ((Get-FileHash -LiteralPath $legacyPath).Hash -eq $legacyHash) 'Legacy migration preserves original bytes'
-    Assert (($data['KwListToParamsMapping'] -join ',') -eq '0,7,2') 'Preserve rule IDs and display order'
+    Assert (($data['KwListToParamsMapping'] -join ',') -eq '0,7,2,9') 'Preserve rule IDs and display order'
     Assert ($data['KeyWordsParams'][7]['label'] -ceq $rules[7]['label']) 'JSON preserves quotes, braces and backslashes in rule text'
+    Assert ($data['KeyWordsParams'][7]['client_command_template'] -ceq $newClientCommand -and
+            $data['KeyWordsParams'][2]['client_command_template'] -ceq '' -and
+            $data['KeyWordsParams'][9]['client_command_template'] -ceq $literalClientCommand) 'Legacy import migrates mixed, RuTracker-only and Kinozal-only commands'
+    Assert ($manifest.rules.'7'.client_command_template -ceq $newClientCommand -and
+            $rules[7]['client_command_line'] -ceq $legacyClientCommand) 'Legacy conversion writes normalized command without changing original rules'
+    $oldJson = Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json
+    foreach ($id in @(7, 2, 9)) {
+        $rule = $oldJson.rules.PSObject.Properties[[string]$id].Value
+        $rule.PSObject.Properties.Remove('client_command_template')
+        Add-Member -InputObject $rule -NotePropertyName client_command_line -NotePropertyValue ($rules[$id]['client_command_line'].Replace('%TorrentPath%', '%torrentpath%'))
+    }
+    [IO.File]::WriteAllText($settingsPath, ($oldJson | ConvertTo-Json -Depth 30))
+    $fromOldJson = Invoke-Store (New-Store $root) Load @($unexpected)
+    Assert ($fromOldJson['KeyWordsParams'][7]['client_command_template'] -ceq $newClientCommand -and
+            $fromOldJson['KeyWordsParams'][2]['client_command_template'] -ceq '' -and
+            $fromOldJson['KeyWordsParams'][9]['client_command_template'] -ceq $literalClientCommand) 'Old JSON migrates all rule types and legacy token casing'
+    $data['KeyWordsParams'][2]['client_command_template'] = '%ClientPath% %TorrentSource%'
+    $data['KeyWordsParams'][7]['client_command_template'] = ''
     Assert ($data['KeyWordsParams'][2]['count_of_new'] -eq '-1') 'Preserve signed legacy unread counts'
     Assert ($data['AppOptions']['dgv_font_bold'].Size -eq 11 -and $data['AppOptions']['dgv_font_bold'].Italic) 'Restore legacy font'
     Assert ($data['frmMain']['width'] -eq 1234 -and $data['frmMain']['windowstate'] -eq [Windows.Forms.FormWindowState]::Maximized -and
@@ -317,6 +343,8 @@ try {
     $reloaded = Invoke-Store (New-Store $root) Load @($unexpected)
     Assert ($reloaded['proxyCredential'].Password -ceq $proxySecret -and
             $reloaded['proxyCredential'].UserName -ceq $user) 'Restore proxy credentials from Windows vault'
+    Assert ($reloaded['KeyWordsParams'][7]['client_command_template'] -ceq '' -and
+            $reloaded['KeyWordsParams'][2]['client_command_template'] -ceq '%ClientPath% %TorrentSource%') 'Reload explicitly cleared mixed command and new RuTracker command'
 
     $reloaded['dtFoundTorrents'].Rows[0]['topic_name'] = 'Updated test title'
     $null = Invoke-Store $store Save @($reloaded, $false)

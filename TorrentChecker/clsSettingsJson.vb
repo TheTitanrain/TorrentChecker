@@ -1,6 +1,7 @@
 Imports System.Globalization
 Imports System.IO
 Imports System.Text
+Imports System.Text.RegularExpressions
 Imports System.Web.Script.Serialization
 
 Friend Module clsSettingsJson
@@ -23,6 +24,24 @@ Friend Module clsSettingsJson
             {"family", font.FontFamily.Name}, {"size", font.Size}, {"style", CInt(font.Style)},
             {"unit", CInt(font.Unit)}, {"charset", font.GdiCharSet}, {"vertical", font.GdiVerticalFont}
         }
+    End Function
+
+    Private Function NormalizeRuleCommand(rule As Dictionary(Of String, String)) As Dictionary(Of String, String)
+        Const LegacyKey As String = "client_command_line"
+        Dim command As String = Nothing
+        If Not rule.TryGetValue(clsTorrentClientCommand.CommandKey, command) Then
+            Dim kinozal As String = Nothing
+            If rule.TryGetValue(Trackers.kinozal.ToString(), kinozal) AndAlso
+               String.Equals(kinozal, Boolean.TrueString, StringComparison.OrdinalIgnoreCase) AndAlso
+               rule.TryGetValue(LegacyKey, command) AndAlso command IsNot Nothing Then
+                command = Regex.Replace(command, "%TorrentPath%", clsTorrentClientCommand.SourceToken,
+                                        RegexOptions.IgnoreCase Or RegexOptions.CultureInvariant)
+            End If
+        End If
+        Dim normalized As New Dictionary(Of String, String)(rule, rule.Comparer)
+        normalized.Remove(LegacyKey)
+        normalized(clsTorrentClientCommand.CommandKey) = If(command, "")
+        Return normalized
     End Function
 
     Friend Function EncodeSettings(data As Dictionary(Of String, Object)) As Dictionary(Of String, Object)
@@ -48,7 +67,8 @@ Friend Module clsSettingsJson
         Dim rules As New Dictionary(Of String, Object)
         If data.ContainsKey("KeyWordsParams") Then
             For Each rule In DirectCast(data("KeyWordsParams"), Dictionary(Of Integer, Dictionary(Of String, String)))
-                rules.Add(rule.Key.ToString(CultureInfo.InvariantCulture), rule.Value)
+                rules.Add(rule.Key.ToString(CultureInfo.InvariantCulture),
+                          If(rule.Key = 0, rule.Value, NormalizeRuleCommand(rule.Value)))
             Next
         Else
             rules.Add("0", KeyWordsParams(0))
@@ -115,8 +135,10 @@ Friend Module clsSettingsJson
 
         Dim rules As New Dictionary(Of Integer, Dictionary(Of String, String))
         For Each rule In Section(wire, "rules")
-            rules.Add(Integer.Parse(rule.Key, CultureInfo.InvariantCulture),
-                      DirectCast(rule.Value, Dictionary(Of String, Object)).ToDictionary(Function(p) p.Key, Function(p) DirectCast(p.Value, String)))
+            Dim id = Integer.Parse(rule.Key, CultureInfo.InvariantCulture)
+            Dim fields = DirectCast(rule.Value, Dictionary(Of String, Object)).
+                ToDictionary(Function(p) p.Key, Function(p) DirectCast(p.Value, String))
+            rules.Add(id, If(id = 0, fields, NormalizeRuleCommand(fields)))
         Next
         If Not rules.ContainsKey(0) Then rules.Add(0, KeyWordsParams(0))
         Dim order = If(wire.ContainsKey("ruleOrder"), DirectCast(wire("ruleOrder"), IList).

@@ -351,7 +351,6 @@ Partial Class frmKeyWord
         Me.txtTCCommandLine.Name = "txtTCCommandLine"
         Me.txtTCCommandLine.Size = New System.Drawing.Size(479, 20)
         Me.txtTCCommandLine.TabIndex = 13
-        Me.txtTCCommandLine.Text = "%ClientPath% /directory ""C:\PathToSave\%TorrentName%"" %TorrentPath%"
         '
         'chkSendToClient
         '
