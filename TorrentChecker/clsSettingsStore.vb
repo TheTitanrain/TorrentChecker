@@ -53,7 +53,8 @@ Friend NotInheritable Class clsSettingsStore
         historyId = ReadId(wire, "historyId")
         credentialId = ReadId(wire, "credentialId")
         Dim data = DecodeSettings(wire)
-        Dim history = serializer.Deserialize(Of Dictionary(Of String, Object))(File.ReadAllText(HistoryPath(historyId), Encoding.UTF8))
+        Dim selectedHistory As String = Nothing
+        Dim history = ReadHistory(historyId, selectedHistory)
         data("dtFoundTorrents") = DecodeHistory(DirectCast(history("found"), Dictionary(Of String, Object)), True)
         data("dtStoredTorrents") = DecodeHistory(DirectCast(history("stored"), Dictionary(Of String, Object)), False)
 
@@ -88,6 +89,12 @@ Friend NotInheritable Class clsSettingsStore
     End Function
 
     Friend Sub Save(data As Dictionary(Of String, Object), writeSecrets As Boolean)
+        'Finish a committed save before reusing the fixed staging filename.
+        If historyId IsNot Nothing Then
+            Dim selectedHistory As String = Nothing
+            ReadHistory(historyId, selectedHistory)
+            If selectedHistory = PendingHistoryPath Then PublishHistory()
+        End If
         Dim serializer = JsonSerializer()
         Dim wire = EncodeSettings(data)
         Dim nextHistory = Guid.NewGuid().ToString("N")
@@ -100,6 +107,7 @@ Friend NotInheritable Class clsSettingsStore
         Dim settingsJson = serializer.Serialize(wire)
         Dim proxy = ProxyEndpoint(DirectCast(wire("proxy"), Dictionary(Of String, Object)))
         Dim history = New With {
+            .historyId = nextHistory,
             .found = EncodeHistory(HistoryTable(data, "dtFoundTorrents", True)),
             .stored = EncodeHistory(HistoryTable(data, "dtStoredTorrents", False))
         }
@@ -114,11 +122,11 @@ Friend NotInheritable Class clsSettingsStore
         End If
 
         Try
-            WriteFile(HistoryPath(nextHistory), historyJson, False)
+            WriteFile(PendingHistoryPath, historyJson, File.Exists(PendingHistoryPath))
             If stageCredentials Then SaveCredentials(data, nextCredentials, proxy)
             WriteFile(settingsPath, FormatSettings(settingsJson), historyId IsNot Nothing)
         Catch
-            DeleteHistory(nextHistory)
+            TryDeleteFile(PendingHistoryPath)
             If stageCredentials Then DeleteCredentials(nextCredentials)
             Throw
         End Try
@@ -128,6 +136,12 @@ Friend NotInheritable Class clsSettingsStore
         Dim oldCredentials = credentialId
         historyId = nextHistory
         credentialId = nextCredentials
+        Try
+            PublishHistory()
+        Catch ex As ComponentModel.Win32Exception
+            'Settings already committed: keep the pending history for Load and the next Save.
+        End Try
+        'The committed history is durable in either the main or pending file.
         DeleteHistory(oldHistory)
         If stageCredentials Then DeleteCredentials(oldCredentials)
     End Sub
@@ -147,14 +161,55 @@ Friend NotInheritable Class clsSettingsStore
                 stream.Flush(True)
             End Using
             'Both paths share a directory. Do not allow a copy/delete fallback across volumes.
-            Dim flags = MoveWriteThrough Or If(replace, MoveReplaceExisting, 0)
-            If Not MoveFileEx(temporary, path, flags) Then
-                Throw New ComponentModel.Win32Exception(Marshal.GetLastWin32Error())
-            End If
+            MoveFile(temporary, path, replace)
         Finally
             TryDeleteFile(temporary)
         End Try
     End Sub
+
+    Private Shared Sub MoveFile(source As String, destination As String, replace As Boolean)
+        Dim flags = MoveWriteThrough Or If(replace, MoveReplaceExisting, 0)
+        If Not MoveFileEx(source, destination, flags) Then
+            Throw New ComponentModel.Win32Exception(Marshal.GetLastWin32Error())
+        End If
+    End Sub
+
+    Private ReadOnly Property PendingHistoryPath As String
+        Get
+            Return Path.Combine(directory, "history.pending.json")
+        End Get
+    End Property
+
+    Private Sub PublishHistory()
+        MoveFile(PendingHistoryPath, Path.Combine(directory, "history.json"), True)
+    End Sub
+
+    Private Function ReadHistory(id As String, ByRef selectedPath As String) As Dictionary(Of String, Object)
+        Dim readFailure As Exception = Nothing
+        For Each candidate In {Path.Combine(directory, "history.json"), PendingHistoryPath}
+            Try
+                Dim history = JsonSerializer().Deserialize(Of Dictionary(Of String, Object))(File.ReadAllText(candidate, Encoding.UTF8))
+                Dim candidateId As Object = Nothing
+                If history IsNot Nothing AndAlso history.TryGetValue("historyId", candidateId) AndAlso Object.Equals(candidateId, id) Then
+                    selectedPath = candidate
+                    Return history
+                End If
+            Catch ex As FileNotFoundException
+                'An absent candidate is expected before the first publication.
+            Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException OrElse
+                                       TypeOf ex Is ArgumentException OrElse TypeOf ex Is InvalidOperationException
+                'A damaged or unavailable old main must not hide a committed pending file.
+                If readFailure Is Nothing Then readFailure = ex
+            End Try
+        Next
+        'Read existing installations without changing their files until a successful save.
+        selectedPath = HistoryPath(id)
+        Try
+            Return JsonSerializer().Deserialize(Of Dictionary(Of String, Object))(File.ReadAllText(selectedPath, Encoding.UTF8))
+        Catch ex As FileNotFoundException
+            Throw New InvalidDataException(UiText.T("Неверная ссылка в settings.json."), If(readFailure, ex))
+        End Try
+    End Function
 
     Private Shared Sub TryDeleteFile(path As String)
         Try

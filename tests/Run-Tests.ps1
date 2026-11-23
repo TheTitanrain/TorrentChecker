@@ -407,7 +407,7 @@ try {
         if ($_.Exception.InnerException -isnot [ComponentModel.Win32Exception]) { throw }
         $failed = $true
     }
-    Assert ($failed -and @(Get-ChildItem -Path $root -Filter 'history-*.json').Count -eq 0) 'Failed import removes staged history'
+    Assert ($failed -and @(Get-ChildItem -Path $root -Filter 'history*.json').Count -eq 0) 'Failed import removes staged history'
     [IO.Directory]::Delete($settingsPath)
 
     $data = Invoke-Store $store Load @($accept)
@@ -463,6 +463,8 @@ try {
 
     $data['proxyCredential'] = (New-Object Net.NetworkCredential($user, $proxySecret)).PSObject.BaseObject
     $beforeSave = [IO.File]::ReadAllText($settingsPath)
+    $beforeHistory = [IO.File]::ReadAllText((Join-Path $root 'history.json'))
+    $data['dtFoundTorrents'].Rows[0]['topic_name'] = 'Unsaved title'
     $blocked = [IO.File]::Open($settingsPath, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
     try {
         $failed = $false
@@ -475,12 +477,14 @@ try {
     $reloaded = Invoke-Store (New-Store $root) Load @($unexpected)
     Assert ($reloaded['rutracker_credentials']['login_password'] -ceq $rtSecret -and
             $reloaded['proxyCredential'].Password -eq '' -and [IO.File]::ReadAllText($settingsPath) -ceq $beforeSave -and
+            $reloaded['dtFoundTorrents'].Rows[0].IsNull('topic_name') -and
+            [IO.File]::ReadAllText((Join-Path $root 'history.json')) -ceq $beforeHistory -and
             $reloaded['dtFoundTorrents'].Rows[0]['keyword_id'] -eq 7 -and
-            @(Get-ChildItem -Path $root -Filter 'history-*.json').Count -eq 1) 'Failed save retains prior settings, history and vault records'
+            @(Get-ChildItem -Path $root -Filter 'history*.json').Count -eq 1) 'Failed save retains prior settings, history and vault records'
     $null = Invoke-Store $store Save @($data, $true)
     $rawJson = Get-Content -LiteralPath $settingsPath -Raw
     $manifest = $rawJson | ConvertFrom-Json
-    $historyPath = Join-Path $root ('history-' + $manifest.historyId + '.json')
+    $historyPath = Join-Path $root 'history.json'
     foreach ($secret in @($rtSecret, $kzSecret, $proxySecret)) {
         Assert (-not $rawJson.Contains($secret) -and -not [IO.File]::ReadAllText($historyPath).Contains($secret)) 'Secrets are absent from both JSON files'
     }
@@ -510,7 +514,117 @@ try {
             $reloaded['dtFoundTorrents'].Rows[0]['topic_name'] -eq 'Updated test title' -and
             $reloaded['proxyCredential'].Password -ceq $proxySecret) 'Ordinary history save retains existing vault entries'
     $manifest = $ordinarySave
-    $historyPath = Join-Path $root ('history-' + $manifest.historyId + '.json')
+    $historyPath = Join-Path $root 'history.json'
+
+    $pendingPath = Join-Path $root 'history.pending.json'
+    Assert ((Test-Path -LiteralPath $historyPath) -and -not (Test-Path -LiteralPath $pendingPath) -and
+            @(Get-ChildItem -Path $root -Filter 'history-*.json').Count -eq 0) 'Successful saves use only history.json'
+
+    # Simulate a crash after staging but before committing settings: old history wins.
+    $uncommitted = Get-Content -LiteralPath $historyPath -Raw | ConvertFrom-Json
+    $uncommitted.historyId = [Guid]::NewGuid().ToString('N')
+    $uncommitted.found.rows = @()
+    [IO.File]::WriteAllText($pendingPath, ($uncommitted | ConvertTo-Json -Depth 30))
+    $reloaded = Invoke-Store (New-Store $root) Load @($unexpected)
+    Assert ($reloaded['dtFoundTorrents'].Rows[0]['topic_name'] -eq 'Updated test title') 'Ignore history staged before settings commit'
+
+    $blockedPending = [IO.File]::Open($pendingPath, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+    try {
+        $settingsBefore = [IO.File]::ReadAllText($settingsPath)
+        $historyBefore = [IO.File]::ReadAllText($historyPath)
+        $pendingBefore = [IO.File]::ReadAllText($pendingPath)
+        $failed = $false
+        try { $null = Invoke-Store $store Save @($reloaded, $true) } catch {
+            if ($_.Exception.InnerException -isnot [ComponentModel.Win32Exception]) { throw }
+            $failed = $true
+        }
+        $unchanged = Invoke-Store (New-Store $root) Load @($unexpected)
+        Assert ($failed -and [IO.File]::ReadAllText($settingsPath) -ceq $settingsBefore -and
+                [IO.File]::ReadAllText($historyPath) -ceq $historyBefore -and
+                [IO.File]::ReadAllText($pendingPath) -ceq $pendingBefore -and
+                $unchanged['proxyCredential'].Password -ceq $proxySecret) 'Failed history staging retains all committed data and credentials'
+    } finally { $blockedPending.Dispose() }
+
+    # Block only the final history rename: settings commit, pending history remains recoverable.
+    $pendingSecret = 'pending-' + $proxySecret
+    $previousCredentialId = (Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json).credentialId
+    $blockedHistory = [IO.File]::Open($historyPath, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+    try {
+        $reloaded['dtFoundTorrents'].Rows[0]['topic_name'] = 'Committed pending title'
+        $reloaded['proxyCredential'] = (New-Object Net.NetworkCredential($user, $pendingSecret)).PSObject.BaseObject
+        $null = Invoke-Store $store Save @($reloaded, $true)
+        $recoveryStore = New-Store $root
+        $recovered = Invoke-Store $recoveryStore Load @($unexpected)
+        $committedManifest = Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json
+        Assert ($committedManifest.credentialId -ne $previousCredentialId -and (Test-Path -LiteralPath $pendingPath) -and
+                $recovered['dtFoundTorrents'].Rows[0]['topic_name'] -eq 'Committed pending title' -and
+                $recovered['proxyCredential'].Password -ceq $pendingSecret) 'Reload committed pending history with matching credentials'
+        $pendingBefore = [IO.File]::ReadAllText($pendingPath)
+        $settingsBefore = [IO.File]::ReadAllText($settingsPath)
+        $failed = $false
+        try { $null = Invoke-Store $recoveryStore Save @($recovered, $false) } catch {
+            if ($_.Exception.InnerException -isnot [ComponentModel.Win32Exception]) { throw }
+            $failed = $true
+        }
+        Assert ($failed -and [IO.File]::ReadAllText($pendingPath) -ceq $pendingBefore -and
+                [IO.File]::ReadAllText($settingsPath) -ceq $settingsBefore -and
+                (Invoke-Store (New-Store $root) Load @($unexpected))['proxyCredential'].Password -ceq $pendingSecret) 'Do not overwrite committed pending history when recovery is blocked'
+    } finally { $blockedHistory.Dispose() }
+    $mainBefore = [IO.File]::ReadAllText($historyPath)
+    foreach ($damagedMain in @('{invalid JSON', $pendingBefore.Replace(($pendingBefore | ConvertFrom-Json).historyId, [Guid]::NewGuid().ToString('N')))) {
+        [IO.File]::WriteAllText($historyPath, $damagedMain)
+        $fromPending = Invoke-Store (New-Store $root) Load @($unexpected)
+        Assert ($fromPending['dtFoundTorrents'].Rows[0]['topic_name'] -eq 'Committed pending title') 'Committed pending recovers despite damaged or mismatched main'
+    }
+    [IO.File]::WriteAllText($historyPath, $mainBefore)
+    $null = Invoke-Store $recoveryStore Save @($recovered, $false)
+    $afterRecovery = Invoke-Store (New-Store $root) Load @($unexpected)
+    Assert (-not (Test-Path -LiteralPath $pendingPath) -and
+            $afterRecovery['proxyCredential'].Password -ceq $pendingSecret) 'Next save completes pending history publication and retains new credentials'
+
+    # Emulate the prior on-disk format and migrate it on the next successful save.
+    $manifest = Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json
+    $legacyHistoryPath = Join-Path $root ('history-' + $manifest.historyId + '.json')
+    $legacyHistory = Get-Content -LiteralPath $historyPath -Raw | ConvertFrom-Json
+    $legacyHistory.PSObject.Properties.Remove('historyId')
+    [IO.File]::WriteAllText($legacyHistoryPath, ($legacyHistory | ConvertTo-Json -Depth 30))
+    [IO.File]::Delete($historyPath)
+    $migrationStore = New-Store $root
+    $migrated = Invoke-Store $migrationStore Load @($unexpected)
+    Assert ($migrated['dtFoundTorrents'].Rows[0]['topic_name'] -eq 'Committed pending title') 'Read legacy history filename without embedded ID'
+    $lockedSettings = [IO.File]::Open($settingsPath, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+    try {
+        $failed = $false
+        try { $null = Invoke-Store $migrationStore Save @($migrated, $false) } catch {
+            if ($_.Exception.InnerException -isnot [ComponentModel.Win32Exception]) { throw }
+            $failed = $true
+        }
+        Assert ($failed -and (Test-Path -LiteralPath $legacyHistoryPath) -and
+                -not (Test-Path -LiteralPath $pendingPath)) 'Failed migration preserves legacy history'
+    } finally { $lockedSettings.Dispose() }
+    $null = [IO.Directory]::CreateDirectory($historyPath)
+    try {
+        $null = Invoke-Store $migrationStore Save @($migrated, $false)
+        $duringMigration = Invoke-Store (New-Store $root) Load @($unexpected)
+        Assert ((Test-Path -LiteralPath $pendingPath) -and -not (Test-Path -LiteralPath $legacyHistoryPath) -and
+                $duringMigration['dtFoundTorrents'].Rows[0]['topic_name'] -eq 'Committed pending title') 'Committed migration removes legacy filename even when promotion is blocked'
+    } finally { [IO.Directory]::Delete($historyPath) }
+    $null = Invoke-Store $migrationStore Save @($migrated, $false)
+    $migratedReload = Invoke-Store (New-Store $root) Load @($unexpected)
+    Assert ((Test-Path -LiteralPath $historyPath) -and -not (Test-Path -LiteralPath $legacyHistoryPath) -and
+            $migratedReload['dtFoundTorrents'].Rows[0]['topic_name'] -eq 'Committed pending title') 'Migrate legacy filename without losing history'
+    $rawJson = [IO.File]::ReadAllText($settingsPath)
+    $manifest = $rawJson | ConvertFrom-Json
+
+    $unmatchedHistory = [IO.File]::ReadAllText($historyPath).Replace($manifest.historyId, [Guid]::NewGuid().ToString('N'))
+    $historyBefore = [IO.File]::ReadAllText($historyPath)
+    [IO.File]::WriteAllText($historyPath, $unmatchedHistory)
+    $broken = $false
+    try { $null = Invoke-Store (New-Store $root) Load @($unexpected) }
+    catch { $broken = $_.Exception.InnerException -is [IO.InvalidDataException] }
+    Assert ($broken -and [IO.File]::ReadAllText($historyPath) -ceq $unmatchedHistory -and
+            [IO.File]::ReadAllText($settingsPath) -ceq $rawJson) 'Reject unmatched history without modifying files or importing legacy settings'
+    [IO.File]::WriteAllText($historyPath, $historyBefore)
 
     $otherEndpoint = $rawJson.Replace('"3128"', '"3129"')
     [IO.File]::WriteAllText($settingsPath, $otherEndpoint)
