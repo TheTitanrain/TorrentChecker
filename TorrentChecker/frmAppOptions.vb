@@ -2,8 +2,10 @@
 
 
     Private Sub RestoreLanguage(sender As Object, e As EventArgs) Handles Me.VisibleChanged
-        If Visible Then languageChoice.SelectedIndex = Math.Max(0, Array.IndexOf(UiText.Codes, CStr(AppOptions("language"))))
+        If Visible Then languageChoice.SelectedIndex = 1 + Array.IndexOf(UiText.Codes, CStr(AppOptions("language")))
     End Sub
+
+    Friend PersistOptions As Func(Of Boolean) = AddressOf WriteOptions
 
     Private font_changed As Boolean
 
@@ -46,6 +48,7 @@
 
     Public Sub New()
         InitializeComponent()
+        languageChoice.Items.Add(UiText.T("Язык системы"))
         languageChoice.Items.AddRange(UiText.Names)
 
         For Each ctrl As Control In Me.Controls
@@ -73,7 +76,6 @@
         If font_changed Then
             ChangeMainFont()
         End If
-        AppOptions("language") = UiText.Codes(languageChoice.SelectedIndex)
         AppOptions("hide_to_tray") = chkHideToTray.Checked
         AppOptions("close_to_tray") = chkCloseToTray.Checked
         AppOptions("run_hidden") = chkRunHidden.Checked
@@ -89,6 +91,17 @@
         TORRENTS_MAX_STORETIME = CLng(txtTorrentsStoreTime.Text) * 24 * 60 * 60
         TORRENTS_MAX_RESULTS = CShort(txtMaxVisibleResults.Text)
 
+        Dim previousLanguage = AppOptions("language")
+        AppOptions("language") = If(languageChoice.SelectedIndex <= 0, "auto", UiText.Codes(languageChoice.SelectedIndex - 1))
+        If Not PersistOptions.Invoke() Then
+            AppOptions("language") = previousLanguage
+            Return
+        End If
+        UiText.SelectLanguage(AppOptions("language"))
+        Me.Hide()
+    End Sub
+
+    Private Function WriteOptions() As Boolean
         Try
             If chkRunWithWindows.Checked Then
                 My.Computer.Registry.CurrentUser.OpenSubKey("SOFTWARE\Microsoft\Windows\CurrentVersion\Run", True).SetValue(Application.ProductName, Application.ExecutablePath)
@@ -99,11 +112,10 @@
             End If
         Catch ex As Exception
             MsgBox(UiText.T("Ошибка при работе с реестром!") & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
-        Finally
-            SaveSettings()
-            Me.Hide()
         End Try
-    End Sub
+
+        Return SaveSettings()
+    End Function
 
     Private Function MakeChecks() As Boolean
         Dim x As Integer 'dummy variable for Integer.TryParse

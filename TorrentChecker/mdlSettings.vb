@@ -10,19 +10,21 @@ Module mdlSettings
 
     Friend Sub LoadSettingsData()
         loaded = SettingsStore.Load(
-            Function() MessageBox.Show("Импортировать старый settings.dat? Продолжайте, только если файл создан вашей копией TorrentChecker и вы доверяете его источнику.",
-                                       "Перенос настроек TorrentChecker", MessageBoxButtons.YesNo,
+            Function() MessageBox.Show(UiText.T("Импортировать старый settings.dat? Продолжайте, только если файл создан вашей копией TorrentChecker и вы доверяете его источнику."),
+                                       UiText.T("Перенос настроек TorrentChecker"), MessageBoxButtons.YesNo,
                                        MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) = DialogResult.Yes, AddressOf UiText.SelectLanguage)
     End Sub
 
-    Public Sub SaveSettings()
-        If Not settingsReady Then Return
+    Public Function SaveSettings() As Boolean
+        If Not settingsReady Then Return False
         Try
             WriteSettings(ProxySettings, ProxyCredential, Nothing, Nothing)
+            Return True
         Catch ex As Exception
             ShowSaveError(ex)
+            Return False
         End Try
-    End Sub
+    End Function
 
     Friend Function SaveCredentialsAndProxy(proxy As Dictionary(Of String, Object), proxyAuth As NetworkCredential,
                                             ruTracker As Dictionary(Of String, String), kinozal As Dictionary(Of String, String)) As Boolean

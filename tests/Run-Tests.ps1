@@ -149,6 +149,34 @@ foreach ($code in $saveLabels.Keys) {
         Assert ($form.Controls.Find('btnSave', $true)[0].Text -ceq $saveLabels[$code]) "Options button in $code"
     } finally { $form.Dispose() }
 }
+$activeCode = $uiText.GetProperty('ActiveCode', $staticFlags)
+$thread = [Threading.Thread]::CurrentThread
+$savedCulture = $thread.CurrentUICulture
+try {
+    $thread.CurrentUICulture = [Globalization.CultureInfo]::GetCultureInfo('uk-UA')
+    $selectLanguage.Invoke($null, @('auto'))
+    Assert ($activeCode.GetValue($null) -ceq 'uk') 'System mode follows the UI culture'
+    $selectLanguage.Invoke($null, @('en'))
+    Assert ($activeCode.GetValue($null) -ceq 'en') 'Explicit language overrides the system culture'
+    $thread.CurrentUICulture = [Globalization.CultureInfo]::GetCultureInfo('fr-FR')
+    $selectLanguage.Invoke($null, @('auto'))
+    Assert ($activeCode.GetValue($null) -ceq 'ru') 'Unsupported system culture falls back to Russian'
+} finally { $thread.CurrentUICulture = $savedCulture }
+
+$form = [Activator]::CreateInstance($assembly.GetType('TorrentChecker.frmMain', $true))
+try {
+    $search = $form.Controls.Find('txtSearch', $true)[0]
+    $search.Tag = $null
+    $search.Text = 'Ubuntu 24'
+    $refresh = $form.GetType().GetMethod('RefreshLanguage', $instanceFlags)
+    $tab = $form.GetType().GetProperty('TabPage_journal', $instanceFlags).GetValue($form)
+    foreach ($case in @(@('en','Error log'), @('be','Журнал памылак'))) {
+        $selectLanguage.Invoke($null, @($case[0]))
+        $refresh.Invoke($form, @())
+        Assert ($tab.Text -ceq $case[1]) 'Existing main window reflects the new language'
+        Assert ($search.Text -ceq 'Ubuntu 24') 'Refreshing the language preserves search input'
+    }
+} finally { $form.Dispose() }
 $selectLanguage.Invoke($null, @('ru'))
 $form = [Activator]::CreateInstance($assembly.GetType('TorrentChecker.frmAppOptions', $true))
 try {
@@ -156,12 +184,54 @@ try {
     $form.Opacity = 0
     $form.Show()
     $choice = $form.Controls.Find('languageChoice', $true)[0]
-    Assert ($choice.SelectedItem -ceq 'Русский') 'Options restore the current language on open'
+    Assert ($choice.SelectedIndex -eq 0 -and $choice.Text -ceq 'Язык системы') 'Options restore the current language on open'
     $choice.SelectedItem = 'English'
+    Assert ($choice.Text -ceq 'English') 'Select an explicit language before cancelling'
     $form.Controls.Find('btnCancel', $true)[0].PerformClick()
     $form.Show()
-    Assert ($choice.SelectedItem -ceq 'Русский') 'Cancel discards the pending language selection'
+    Assert ($choice.SelectedIndex -eq 0 -and $choice.Text -ceq 'Язык системы') 'Cancel discards the pending language selection'
 } finally { $form.Dispose() }
+
+# Drive the options menu and its modal Save button. Replace the registry/disk write
+# with one failure followed by success so the test cannot change user settings.
+$main = [Activator]::CreateInstance($assembly.GetType('TorrentChecker.frmMain', $true))
+$project = $assembly.GetType('TorrentChecker.My.MyProject', $true)
+$forms = $project.GetProperty('Forms', $staticFlags).GetValue($null)
+$optionsProperty = $forms.GetType().GetProperty('frmAppOptions')
+$dialog = $optionsProperty.GetValue($forms)
+$optionsField = $assembly.GetType('TorrentChecker.mdlMain').GetField('AppOptions')
+$options = $optionsField.GetValue($null)
+$backup = New-Object 'System.Collections.Generic.Dictionary[string,object]' (,$options)
+$modalResult = @{ Error = $null; Writes = 0 }
+try {
+    $search = $main.Controls.Find('txtSearch', $true)[0]
+    $search.Text = 'Linux'
+    $dialog.GetType().GetField('PersistOptions', $instanceFlags).SetValue($dialog, [Func[bool]]{
+        $modalResult.Writes++
+        return $modalResult.Writes -eq 2
+    })
+    $dialog.add_Shown({
+        try {
+            $list = $dialog.Controls.Find('languageChoice', $true)[0]
+            $list.SelectedItem = 'English'
+            $save = $dialog.Controls.Find('btnSave', $true)[0]
+            $save.PerformClick()
+            Assert ($dialog.Visible -and $options['language'] -ceq 'auto' -and $activeCode.GetValue($null) -ceq 'ru') 'Failed save preserves active language and preference'
+            $save.PerformClick()
+        } catch { $modalResult.Error = $_ } finally { $dialog.Hide() }
+    })
+    $main.GetType().GetMethod('msiAppOptions_Click', $instanceFlags).Invoke($main, @($null, [EventArgs]::Empty))
+    if ($modalResult.Error) { throw $modalResult.Error }
+    Assert ($modalResult.Writes -eq 2 -and $options['language'] -ceq 'en') 'Retry commits the explicit language'
+    Assert ($main.Controls.Find('btnConnect', $true)[0].Text -ceq 'Check now' -and $search.Text -ceq 'Linux') 'Saving through the dialog refreshes the existing window'
+    $reopened = $optionsProperty.GetValue($forms)
+    Assert ($reopened.Controls.Find('btnSave', $true)[0].Text -ceq 'Save') 'Reopened options use the saved language'
+} finally {
+    $optionsProperty.SetValue($forms, $null)
+    $optionsField.SetValue($null, $backup)
+    $main.Dispose()
+    $selectLanguage.Invoke($null, @('ru'))
+}
 
 # Construct windows without showing them or running Load handlers. This verifies
 # compiled WinForms resources without network requests or user settings writes.
@@ -316,7 +386,7 @@ try {
 
     $data = Invoke-Store $store Load @($accept)
     $manifest = Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json
-    Assert ($data['AppOptions']['language'] -ceq 'ru') 'Legacy settings default to Russian'
+    Assert ($data['AppOptions']['language'] -ceq 'auto') 'Legacy settings default to system language'
     $initialManifest = $manifest
     Assert ((Get-FileHash -LiteralPath $legacyPath).Hash -eq $legacyHash) 'Legacy migration preserves original bytes'
     Assert (($data['KwListToParamsMapping'] -join ',') -eq '0,7,2,9') 'Preserve rule IDs and display order'
@@ -338,11 +408,11 @@ try {
     Assert ($fromOldJson['KeyWordsParams'][7]['client_command_template'] -ceq $newClientCommand -and
             $fromOldJson['KeyWordsParams'][2]['client_command_template'] -ceq '' -and
             $fromOldJson['KeyWordsParams'][9]['client_command_template'] -ceq $literalClientCommand) 'Old JSON migrates all rule types and legacy token casing'
-    Assert ($fromOldJson['AppOptions']['language'] -ceq 'ru') 'Missing language in old JSON defaults to Russian'
+    Assert ($fromOldJson['AppOptions']['language'] -ceq 'auto') 'Missing language in old JSON defaults to system language'
     Add-Member -InputObject $oldJson.options -NotePropertyName language -NotePropertyValue 'unknown'
     [IO.File]::WriteAllText($settingsPath, ($oldJson | ConvertTo-Json -Depth 30))
     $unknownLanguage = Invoke-Store (New-Store $root) Load @($unexpected)
-    Assert ($unknownLanguage['AppOptions']['language'] -ceq 'ru') 'Unsupported UI language defaults to Russian'
+    Assert ($unknownLanguage['AppOptions']['language'] -ceq 'auto') 'Unsupported UI language defaults to system language'
     $data['AppOptions']['language'] = 'kk'
     $data['KeyWordsParams'][2]['client_command_template'] = '%ClientPath% %TorrentSource%'
     $data['KeyWordsParams'][7]['client_command_template'] = ''

@@ -4,7 +4,7 @@ Imports System.Text.RegularExpressions
 Imports System.Threading
 
 Public Class frmMain
-    Private ReadOnly openMagnetMenu As New ToolStripMenuItem(UiText.T("Открыть magnet в торрент-клиенте"))
+    Private ReadOnly openMagnetMenu As New ToolStripMenuItem()
     Private HTTP As New clsHTTP
     Private HTTPUpdate As New clsHTTP
     Private HTTPUpdateResult As clsHTTP.HTTPResult
@@ -17,6 +17,7 @@ Public Class frmMain
             {"captcha_sid", ""},
             {"captcha_code", ""}
         }
+    Private availableVersion As String
     Private activeScanGeneration As Long
     Friend ScanSaveSettings As Action = Sub() SaveSettings()
     Friend StartTorrentClient As Action(Of ProcessStartInfo) = Sub(info) Process.Start(info)?.Dispose()
@@ -26,6 +27,9 @@ Public Class frmMain
 
     Public Sub New()
         InitializeComponent()
+        ApplyStaticText()
+        grpKWBox.Text = String.Format(UiText.T("Ключевые фразы: {0}"), 0)
+        TabPage_torrents.Text = String.Format(UiText.T("Найденные торренты: {0}"), 0)
         cmsTorrents.Items.Insert(cmsTorrents.Items.IndexOf(cmsiCopyLink) + 1, openMagnetMenu)
         AddHandler openMagnetMenu.Click, AddressOf OpenSelectedMagnet
         For Each ctrl As Control In Me.Controls
@@ -36,6 +40,84 @@ Public Class frmMain
         msiNewPM.Font = FONT_BOLD
         msiPM_ru.Font = FONT_NORMAL
         msiPM_kz.Font = FONT_NORMAL
+    End Sub
+
+    Private Sub ApplyStaticText()
+        btnConnect.Text = UiText.T("Проверить сейчас")
+        cmsiCopyLink.Text = UiText.T("Скопировать ссылку в буфер обмена")
+        cmsiMarkSelectedAsRead.Text = UiText.T("Отметить выбранные торренты как прочитанные")
+        cmsiMarkSelectedAsUnRead.Text = UiText.T("Отметить выбранные торренты как непрочитанные")
+        cmsiDeleteSelectedTorrents.Text = UiText.T("Удалить выбранные торренты из списка")
+        cmsiMarkAllAsRead_t.Text = UiText.T("Отметить все торренты как прочитанные")
+        cmsiMarkAllAsUnRead_t.Text = UiText.T("Отметить все торренты как непрочитанные")
+        cmsiClearAll_t.Text = UiText.T("Очистить все найденные торренты")
+        cmsiAddKeyWord.Text = UiText.T("Добавить ключевое слово")
+        cmsiEditKeyWord.Text = UiText.T("Редактировать выбранное ключевое слово")
+        cmsiDeleteSelectedKW.Text = UiText.T("Удалить выбранные ключевые слова из списка")
+        cmsiMarkAllAsRead.Text = UiText.T("Отметить все торренты как прочитанные")
+        cmsiMarkAllAsUnRead.Text = UiText.T("Отметить все торренты как непрочитанные")
+        cmsiClearAll.Text = UiText.T("Очистить все найденные торренты")
+        cmsiPause.Text = UiText.T("Приостановить")
+        cmsiResume.Text = UiText.T("Возобновить")
+        btnAddKeyWord.Text = UiText.T("Добавить")
+        TabPage_journal.Text = UiText.T("Журнал ошибок")
+        cmsiLogSelectAll.Text = UiText.T("Выделить весь текст")
+        cmsiLogCopyText.Text = UiText.T("Копировать текст")
+        cmsiLogClear.Text = UiText.T("Очистить журнал")
+        Label1.Text = UiText.T("Введите текст с капчи:")
+        btnSendCaptcha.Text = UiText.T("Отправить капчу")
+        msiFile.Text = UiText.T("Файл")
+        msiExit.Text = UiText.T("Выход")
+        msiOptions.Text = UiText.T("Опции")
+        msiCredentials.Text = UiText.T("Настройки подключения")
+        msiAppOptions.Text = UiText.T("Настройки программы")
+        msiHide.Text = UiText.T("Скрыть в трей")
+        msiPause.Text = UiText.T("Приостановить проверку")
+        msiHelp.Text = UiText.T("Помощь")
+        msiHomePage.Text = UiText.T("Домашняя страница TorrentChecker")
+        msiAbout.Text = UiText.T("О программе")
+        msiNewPM.Text = UiText.T("У вас есть новые ЛС!")
+        msiPM_ru.Text = UiText.T("Рутрекер")
+        msiPM_kz.Text = UiText.T("Кинозал")
+        cmsiHide.Text = UiText.T("Скрыть в трей")
+        сmsiPause.Text = UiText.T("Приостановить проверку")
+        сmsiExit.Text = UiText.T("Выход")
+        lblShowNewVersion.Text = UiText.T("Обновлений нет")
+        openMagnetMenu.Text = UiText.T("Открыть magnet в торрент-клиенте")
+    End Sub
+
+    Friend Sub RefreshLanguage()
+        ApplyStaticText()
+        grpKWBox.Text = String.Format(UiText.T("Ключевые фразы: {0}"), Math.Max(0, dgvKeyWords.Rows.Count - 1))
+        TabPage_torrents.Text = String.Format(UiText.T("Найденные торренты: {0}"), bsrcFoundTorrents.Count)
+        If unread_errors_count > 0 Then TabPage_journal.Text = String.Format(UiText.T("Журнал ошибок: новых {0}"), unread_errors_count)
+        If dgvKeyWords.Rows.Count > 0 Then RenameKWItem(0, UiText.T("Все"), CInt(KeyWordsParams(0)("count_of_new")))
+        If Equals(txtSearch.Tag, "default_text_is_set") Then txtSearch.Text = UiText.T("Фильтр по названию темы")
+        If tbControl.TabPages.Contains(TabPage_captcha) Then
+            TabPage_captcha.Text = String.Format(UiText.T("{0} запрашивает капчу"), TrackerParams(CaptchaParams("tracker_id"))("tracker_name"))
+        End If
+        For Each column As DataGridViewColumn In dgvTorrents.Columns
+            column.HeaderText = UiText.T(CStr(dgvTorrentsColumns(column.Name)("name")))
+            Dim menu = cmsTorrentColumns.Items(column.Name)
+            If menu IsNot Nothing Then menu.Text = column.HeaderText
+        Next
+        dgvTorrents.Invalidate()
+        If APP_HIDDEN Then
+            msiHide.Text = UiText.T("Показать")
+            cmsiHide.Text = msiHide.Text
+        End If
+        If LAST_CHECK_TIME <> UNIX_TIME_ORIGIN Then
+            tmrLastCheck_Tick(Me, EventArgs.Empty)
+        ElseIf activeScanGeneration > 0 Then
+            tssLabel.Text = UiText.T("Идет проверка...")
+        End If
+        If availableVersion IsNot Nothing Then
+            lblShowNewVersion.Text = String.Format(UiText.T("Доступна новая версия: {0}. Текущая версия: {1}"), availableVersion, APP_VERSION)
+        End If
+        trayIconPM.Text = APP_NAME & vbCrLf & UiText.T("Eсть новые персональные сообщения!")
+        If tmrTray.Enabled Then trayIcon.Text = APP_NAME & vbCrLf & UiText.T("Найдены новые торренты!")
+        If NewPMMenuVisible(Trackers.rutracker) Then msiPM_ru.Text = PrivateMessageCaption(Trackers.rutracker)
+        If NewPMMenuVisible(Trackers.kinozal) Then msiPM_kz.Text = PrivateMessageCaption(Trackers.kinozal)
     End Sub
 
     Private Sub frmMain_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
@@ -1661,7 +1743,15 @@ Public Class frmMain
     End Sub
 
     Private Sub msiAppOptions_Click(sender As Object, e As EventArgs) Handles msiAppOptions.Click
+        Dim previousLanguage = UiText.ActiveCode
         frmAppOptions.ShowDialog()
+        If previousLanguage <> UiText.ActiveCode Then
+            RefreshLanguage()
+            My.Forms.frmAppOptions = Nothing
+            My.Forms.frmCredentials = Nothing
+            My.Forms.frmKeyWord = Nothing
+            My.Forms.frmForums = Nothing
+        End If
         Me.BringToFront()
 
         If AppOptions("show_journal_tab") Then
@@ -1750,9 +1840,11 @@ Public Class frmMain
                 If HTTPUpdateResult.Result.Length <> 0 Then
                     Dim tag_name As String = Regex.Match(HTTPUpdateResult.Result, """tag_name"":""(.+?)""", RegexOptions.IgnoreCase, REGEX_TIMEOUT).Groups(1).Value
                     If IsNewerVersion(tag_name, APP_VERSION) Then
+                        availableVersion = tag_name
                         lblShowNewVersion.Visible = True
                         lblShowNewVersion.Text = String.Format(UiText.T("Доступна новая версия: {0}. Текущая версия: {1}"), tag_name, APP_VERSION)
                     Else
+                        availableVersion = Nothing
                         lblShowNewVersion.Visible = False
                     End If
                 End If
@@ -1779,8 +1871,7 @@ Public Class frmMain
     Private Sub ShowPM(ByVal tracker_id As Trackers, ByVal show As Boolean)
         'show/hide the 'new PM' indicator
 
-        Dim tracker_name As String = TrackerParams(tracker_id)("tracker_name")
-        Dim menu_text As String = String.Format(UiText.T("Новое персональное сообщение на {0}"), tracker_name)
+        Dim menu_text = PrivateMessageCaption(tracker_id)
 
         Select Case tracker_id
             Case Trackers.rutracker
@@ -1794,6 +1885,10 @@ Public Class frmMain
         NewPMMenuVisible(tracker_id) = show
         ChangeVisibilityPM(NewPMMenuVisible(Trackers.rutracker) OrElse NewPMMenuVisible(Trackers.kinozal), menu_text)
     End Sub
+
+    Private Function PrivateMessageCaption(tracker_id As Trackers) As String
+        Return String.Format(UiText.T("Новое персональное сообщение на {0}"), TrackerParams(tracker_id)("tracker_name"))
+    End Function
 
     Private Sub MsiPM_ru_Click(sender As Object, e As EventArgs) Handles msiPM_ru.Click
         'hide menu item after click

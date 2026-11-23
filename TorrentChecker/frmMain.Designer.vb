@@ -132,7 +132,6 @@ Partial Class frmMain
         Me.btnConnect.Name = "btnConnect"
         Me.btnConnect.Size = New System.Drawing.Size(148, 26)
         Me.btnConnect.TabIndex = 0
-        Me.btnConnect.Text = UiText.T("Проверить сейчас")
         Me.btnConnect.UseVisualStyleBackColor = True
         '
         'dgvTorrents
@@ -175,7 +174,6 @@ Partial Class frmMain
         '
         Me.cmsiCopyLink.Name = "cmsiCopyLink"
         Me.cmsiCopyLink.Size = New System.Drawing.Size(361, 22)
-        Me.cmsiCopyLink.Text = UiText.T("Скопировать ссылку в буфер обмена")
         '
         'ToolStripMenuItem1
         '
@@ -186,19 +184,16 @@ Partial Class frmMain
         '
         Me.cmsiMarkSelectedAsRead.Name = "cmsiMarkSelectedAsRead"
         Me.cmsiMarkSelectedAsRead.Size = New System.Drawing.Size(361, 22)
-        Me.cmsiMarkSelectedAsRead.Text = UiText.T("Отметить выбранные торренты как прочитанные")
         '
         'cmsiMarkSelectedAsUnRead
         '
         Me.cmsiMarkSelectedAsUnRead.Name = "cmsiMarkSelectedAsUnRead"
         Me.cmsiMarkSelectedAsUnRead.Size = New System.Drawing.Size(361, 22)
-        Me.cmsiMarkSelectedAsUnRead.Text = UiText.T("Отметить выбранные торренты как непрочитанные")
         '
         'cmsiDeleteSelectedTorrents
         '
         Me.cmsiDeleteSelectedTorrents.Name = "cmsiDeleteSelectedTorrents"
         Me.cmsiDeleteSelectedTorrents.Size = New System.Drawing.Size(361, 22)
-        Me.cmsiDeleteSelectedTorrents.Text = UiText.T("Удалить выбранные торренты из списка")
         '
         'ToolStripMenuItem2
         '
@@ -209,19 +204,16 @@ Partial Class frmMain
         '
         Me.cmsiMarkAllAsRead_t.Name = "cmsiMarkAllAsRead_t"
         Me.cmsiMarkAllAsRead_t.Size = New System.Drawing.Size(361, 22)
-        Me.cmsiMarkAllAsRead_t.Text = UiText.T("Отметить все торренты как прочитанные")
         '
         'cmsiMarkAllAsUnRead_t
         '
         Me.cmsiMarkAllAsUnRead_t.Name = "cmsiMarkAllAsUnRead_t"
         Me.cmsiMarkAllAsUnRead_t.Size = New System.Drawing.Size(361, 22)
-        Me.cmsiMarkAllAsUnRead_t.Text = UiText.T("Отметить все торренты как непрочитанные")
         '
         'cmsiClearAll_t
         '
         Me.cmsiClearAll_t.Name = "cmsiClearAll_t"
         Me.cmsiClearAll_t.Size = New System.Drawing.Size(361, 22)
-        Me.cmsiClearAll_t.Text = UiText.T("Очистить все найденные торренты")
         '
         'txtSearch
         '
@@ -271,7 +263,6 @@ Partial Class frmMain
         Me.grpKWBox.Size = New System.Drawing.Size(263, 418)
         Me.grpKWBox.TabIndex = 4
         Me.grpKWBox.TabStop = False
-        Me.grpKWBox.Text = String.Format(UiText.T("Ключевые фразы: {0}"), 0)
         '
         'dgvKeyWords
         '
@@ -306,7 +297,6 @@ Partial Class frmMain
         '
         Me.cmsiAddKeyWord.Name = "cmsiAddKeyWord"
         Me.cmsiAddKeyWord.Size = New System.Drawing.Size(336, 22)
-        Me.cmsiAddKeyWord.Text = UiText.T("Добавить ключевое слово")
         '
         'ToolStripMenuItem3
         '
@@ -317,13 +307,11 @@ Partial Class frmMain
         '
         Me.cmsiEditKeyWord.Name = "cmsiEditKeyWord"
         Me.cmsiEditKeyWord.Size = New System.Drawing.Size(336, 22)
-        Me.cmsiEditKeyWord.Text = UiText.T("Редактировать выбранное ключевое слово")
         '
         'cmsiDeleteSelectedKW
         '
         Me.cmsiDeleteSelectedKW.Name = "cmsiDeleteSelectedKW"
         Me.cmsiDeleteSelectedKW.Size = New System.Drawing.Size(336, 22)
-        Me.cmsiDeleteSelectedKW.Text = UiText.T("Удалить выбранные ключевые слова из списка")
         '
         'ToolStripMenuItem4
         '
@@ -334,19 +322,16 @@ Partial Class frmMain
         '
         Me.cmsiMarkAllAsRead.Name = "cmsiMarkAllAsRead"
         Me.cmsiMarkAllAsRead.Size = New System.Drawing.Size(336, 22)
-        Me.cmsiMarkAllAsRead.Text = UiText.T("Отметить все торренты как прочитанные")
         '
         'cmsiMarkAllAsUnRead
         '
         Me.cmsiMarkAllAsUnRead.Name = "cmsiMarkAllAsUnRead"
         Me.cmsiMarkAllAsUnRead.Size = New System.Drawing.Size(336, 22)
-        Me.cmsiMarkAllAsUnRead.Text = UiText.T("Отметить все торренты как непрочитанные")
         '
         'cmsiClearAll
         '
         Me.cmsiClearAll.Name = "cmsiClearAll"
         Me.cmsiClearAll.Size = New System.Drawing.Size(336, 22)
-        Me.cmsiClearAll.Text = UiText.T("Очистить все найденные торренты")
         '
         'ToolStripMenuItem5
         '
@@ -357,13 +342,11 @@ Partial Class frmMain
         '
         Me.cmsiPause.Name = "cmsiPause"
         Me.cmsiPause.Size = New System.Drawing.Size(336, 22)
-        Me.cmsiPause.Text = UiText.T("Приостановить")
         '
         'cmsiResume
         '
         Me.cmsiResume.Name = "cmsiResume"
         Me.cmsiResume.Size = New System.Drawing.Size(336, 22)
-        Me.cmsiResume.Text = UiText.T("Возобновить")
         '
         'btnAddKeyWord
         '
@@ -373,7 +356,6 @@ Partial Class frmMain
         Me.btnAddKeyWord.Name = "btnAddKeyWord"
         Me.btnAddKeyWord.Size = New System.Drawing.Size(114, 26)
         Me.btnAddKeyWord.TabIndex = 3
-        Me.btnAddKeyWord.Text = UiText.T("Добавить")
         Me.btnAddKeyWord.UseVisualStyleBackColor = True
         '
         'tbControl
@@ -398,7 +380,6 @@ Partial Class frmMain
         Me.TabPage_torrents.Padding = New System.Windows.Forms.Padding(4, 3, 4, 3)
         Me.TabPage_torrents.Size = New System.Drawing.Size(814, 434)
         Me.TabPage_torrents.TabIndex = 0
-        Me.TabPage_torrents.Text = String.Format(UiText.T("Найденные торренты: {0}"), 0)
         Me.TabPage_torrents.UseVisualStyleBackColor = True
         '
         'TabPage_journal
@@ -410,7 +391,6 @@ Partial Class frmMain
         Me.TabPage_journal.Padding = New System.Windows.Forms.Padding(4, 3, 4, 3)
         Me.TabPage_journal.Size = New System.Drawing.Size(914, 434)
         Me.TabPage_journal.TabIndex = 1
-        Me.TabPage_journal.Text = UiText.T("Журнал ошибок")
         Me.TabPage_journal.UseVisualStyleBackColor = True
         '
         'rtbLogTextBox
@@ -438,7 +418,6 @@ Partial Class frmMain
         '
         Me.cmsiLogSelectAll.Name = "cmsiLogSelectAll"
         Me.cmsiLogSelectAll.Size = New System.Drawing.Size(185, 22)
-        Me.cmsiLogSelectAll.Text = UiText.T("Выделить весь текст")
         '
         'ToolStripMenuItem11
         '
@@ -449,7 +428,6 @@ Partial Class frmMain
         '
         Me.cmsiLogCopyText.Name = "cmsiLogCopyText"
         Me.cmsiLogCopyText.Size = New System.Drawing.Size(185, 22)
-        Me.cmsiLogCopyText.Text = UiText.T("Копировать текст")
         '
         'ToolStripMenuItem10
         '
@@ -460,7 +438,6 @@ Partial Class frmMain
         '
         Me.cmsiLogClear.Name = "cmsiLogClear"
         Me.cmsiLogClear.Size = New System.Drawing.Size(185, 22)
-        Me.cmsiLogClear.Text = UiText.T("Очистить журнал")
         '
         'TabPage_captcha
         '
@@ -475,7 +452,6 @@ Partial Class frmMain
         Me.TabPage_captcha.Padding = New System.Windows.Forms.Padding(4, 3, 4, 3)
         Me.TabPage_captcha.Size = New System.Drawing.Size(914, 434)
         Me.TabPage_captcha.TabIndex = 2
-        Me.TabPage_captcha.Text = String.Format(UiText.T("{0} запрашивает капчу"), "xyz")
         '
         'txtCaptcha
         '
@@ -494,7 +470,6 @@ Partial Class frmMain
         Me.Label1.Name = "Label1"
         Me.Label1.Size = New System.Drawing.Size(124, 13)
         Me.Label1.TabIndex = 2
-        Me.Label1.Text = UiText.T("Введите текст с капчи:")
         '
         'btnSendCaptcha
         '
@@ -503,7 +478,6 @@ Partial Class frmMain
         Me.btnSendCaptcha.Name = "btnSendCaptcha"
         Me.btnSendCaptcha.Size = New System.Drawing.Size(150, 26)
         Me.btnSendCaptcha.TabIndex = 0
-        Me.btnSendCaptcha.Text = UiText.T("Отправить капчу")
         Me.btnSendCaptcha.UseVisualStyleBackColor = True
         '
         'picCaptcha
@@ -537,32 +511,27 @@ Partial Class frmMain
         Me.msiFile.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.msiExit})
         Me.msiFile.Name = "msiFile"
         Me.msiFile.Size = New System.Drawing.Size(48, 20)
-        Me.msiFile.Text = UiText.T("Файл")
         '
         'msiExit
         '
         Me.msiExit.Name = "msiExit"
         Me.msiExit.Size = New System.Drawing.Size(180, 22)
-        Me.msiExit.Text = UiText.T("Выход")
         '
         'msiOptions
         '
         Me.msiOptions.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.msiCredentials, Me.msiAppOptions, Me.ToolStripMenuItem7, Me.msiHide, Me.ToolStripMenuItem8, Me.msiPause})
         Me.msiOptions.Name = "msiOptions"
         Me.msiOptions.Size = New System.Drawing.Size(56, 20)
-        Me.msiOptions.Text = UiText.T("Опции")
         '
         'msiCredentials
         '
         Me.msiCredentials.Name = "msiCredentials"
         Me.msiCredentials.Size = New System.Drawing.Size(214, 22)
-        Me.msiCredentials.Text = UiText.T("Настройки подключения")
         '
         'msiAppOptions
         '
         Me.msiAppOptions.Name = "msiAppOptions"
         Me.msiAppOptions.Size = New System.Drawing.Size(214, 22)
-        Me.msiAppOptions.Text = UiText.T("Настройки программы")
         '
         'ToolStripMenuItem7
         '
@@ -573,7 +542,6 @@ Partial Class frmMain
         '
         Me.msiHide.Name = "msiHide"
         Me.msiHide.Size = New System.Drawing.Size(214, 22)
-        Me.msiHide.Text = UiText.T("Скрыть в трей")
         '
         'ToolStripMenuItem8
         '
@@ -584,20 +552,17 @@ Partial Class frmMain
         '
         Me.msiPause.Name = "msiPause"
         Me.msiPause.Size = New System.Drawing.Size(214, 22)
-        Me.msiPause.Text = UiText.T("Приостановить проверку")
         '
         'msiHelp
         '
         Me.msiHelp.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.msiHomePage, Me.ToolStripMenuItem12, Me.msiAbout})
         Me.msiHelp.Name = "msiHelp"
         Me.msiHelp.Size = New System.Drawing.Size(68, 20)
-        Me.msiHelp.Text = UiText.T("Помощь")
         '
         'msiHomePage
         '
         Me.msiHomePage.Name = "msiHomePage"
         Me.msiHomePage.Size = New System.Drawing.Size(271, 22)
-        Me.msiHomePage.Text = UiText.T("Домашняя страница TorrentChecker")
         '
         'ToolStripMenuItem12
         '
@@ -608,7 +573,6 @@ Partial Class frmMain
         '
         Me.msiAbout.Name = "msiAbout"
         Me.msiAbout.Size = New System.Drawing.Size(271, 22)
-        Me.msiAbout.Text = UiText.T("О программе")
         '
         'msiNewPM
         '
@@ -616,21 +580,18 @@ Partial Class frmMain
         Me.msiNewPM.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.msiPM_ru, Me.msiPM_kz})
         Me.msiNewPM.Name = "msiNewPM"
         Me.msiNewPM.Size = New System.Drawing.Size(133, 20)
-        Me.msiNewPM.Text = UiText.T("У вас есть новые ЛС!")
         Me.msiNewPM.Visible = False
         '
         'msiPM_ru
         '
         Me.msiPM_ru.Name = "msiPM_ru"
         Me.msiPM_ru.Size = New System.Drawing.Size(124, 22)
-        Me.msiPM_ru.Text = UiText.T("Рутрекер")
         Me.msiPM_ru.Visible = False
         '
         'msiPM_kz
         '
         Me.msiPM_kz.Name = "msiPM_kz"
         Me.msiPM_kz.Size = New System.Drawing.Size(124, 22)
-        Me.msiPM_kz.Text = UiText.T("Кинозал")
         Me.msiPM_kz.Visible = False
         '
         'trayIcon
@@ -650,7 +611,6 @@ Partial Class frmMain
         '
         Me.cmsiHide.Name = "cmsiHide"
         Me.cmsiHide.Size = New System.Drawing.Size(214, 22)
-        Me.cmsiHide.Text = UiText.T("Скрыть в трей")
         '
         'ToolStripMenuItem9
         '
@@ -661,7 +621,6 @@ Partial Class frmMain
         '
         Me.сmsiPause.Name = "сmsiPause"
         Me.сmsiPause.Size = New System.Drawing.Size(214, 22)
-        Me.сmsiPause.Text = UiText.T("Приостановить проверку")
         '
         'ToolStripMenuItem6
         '
@@ -672,7 +631,6 @@ Partial Class frmMain
         '
         Me.сmsiExit.Name = "сmsiExit"
         Me.сmsiExit.Size = New System.Drawing.Size(214, 22)
-        Me.сmsiExit.Text = UiText.T("Выход")
         '
         'tmrTray
         '
@@ -718,7 +676,6 @@ Partial Class frmMain
         Me.lblShowNewVersion.Name = "lblShowNewVersion"
         Me.lblShowNewVersion.Size = New System.Drawing.Size(89, 13)
         Me.lblShowNewVersion.TabIndex = 9
-        Me.lblShowNewVersion.Text = UiText.T("Обновлений нет")
         Me.lblShowNewVersion.Visible = False
         '
         'trayIconPM

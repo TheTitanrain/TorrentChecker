@@ -185,7 +185,7 @@ Public Module mdlMain
     }
     Public AppOptions As New Dictionary(Of String, Object) From
     {
-        {"language", "ru"},
+        {"language", "auto"},
         {"hide_to_tray", False},
         {"close_to_tray", False},
         {"run_hidden", False},

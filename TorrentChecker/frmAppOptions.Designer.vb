@@ -339,7 +339,7 @@ Partial Class frmAppOptions
         Me.languageChoice.TabIndex = 12
         Me.languageLabel.AutoSize = True
         Me.languageLabel.Location = New Point(12, 464)
-        Me.languageLabel.Text = UiText.T("Язык (после перезапуска)")
+        Me.languageLabel.Text = UiText.T("Язык интерфейса")
         Me.Controls.Add(Me.languageChoice)
         Me.Controls.Add(Me.languageLabel)
         Me.AutoScaleDimensions = New System.Drawing.SizeF(96.0!, 96.0!)

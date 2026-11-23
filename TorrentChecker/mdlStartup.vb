@@ -4,6 +4,7 @@ Friend Module mdlStartup
     <STAThread>
     Public Sub Main()
         Try
+            UiText.SelectLanguage(Nothing)
             Application.EnableVisualStyles()
             Application.SetCompatibleTextRenderingDefault(False)
             Using settingsLock = SettingsStore.AcquireLock()

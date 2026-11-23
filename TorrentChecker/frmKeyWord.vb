@@ -273,6 +273,7 @@ Public Class frmKeyWord
             lblForumsKinozal.Text = UiText.T("загружается список...")
 
             Await GetForumsList(TrackerSelectedID)
+            If IsDisposed Then Return
 
             lblForumsKinozal.Text = UiText.T("Выбрать форумы")
             lblForumsKinozal.Font = FONT_UNDERLINE
