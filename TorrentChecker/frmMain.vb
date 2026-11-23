@@ -74,7 +74,6 @@ Public Class frmMain
         msiHide.Text = UiText.T("Скрыть в трей")
         msiPause.Text = UiText.T("Приостановить проверку")
         msiHelp.Text = UiText.T("Помощь")
-        msiHomePage.Text = UiText.T("Домашняя страница TorrentChecker")
         msiAbout.Text = UiText.T("О программе")
         msiNewPM.Text = UiText.T("У вас есть новые ЛС!")
         msiPM_ru.Text = UiText.T("Рутрекер")
@@ -1794,20 +1793,45 @@ Public Class frmMain
         SaveFormSettings()
     End Sub
 
-    Private Sub msiHomePage_Click(sender As Object, e As EventArgs) Handles msiHomePage.Click
-        'open browser with the forum
-
+    Private Sub OpenBrowser(url As String)
         Try
-            System.Diagnostics.Process.Start(HOME_PAGE_URL)
+            System.Diagnostics.Process.Start(url)
         Catch ex As Exception
             MsgBox(UiText.T("Не могу открыть браузер") & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
         End Try
     End Sub
 
     Private Sub msiAbout_Click(sender As Object, e As EventArgs) Handles msiAbout.Click
-        Dim description = UiText.T("Автоматический поиск торрентов по ключевым словам.")
-        Dim message = APP_NAME & vbCrLf & vbCrLf & description & vbCrLf & vbCrLf & My.Application.Info.Copyright.Trim()
-        MsgBox(message, MsgBoxStyle.Information Or MsgBoxStyle.OkOnly, UiText.T("О программе"))
+        Using dialog As New Form With {
+            .Text = UiText.T("О программе"), .Font = Me.Font, .Icon = Me.Icon,
+            .AutoScaleMode = AutoScaleMode.Font, .AutoSize = True, .AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            .FormBorderStyle = FormBorderStyle.FixedDialog, .StartPosition = FormStartPosition.CenterParent,
+            .MaximizeBox = False, .MinimizeBox = False, .ShowInTaskbar = False}
+            Dim layout As New TableLayoutPanel With {
+                .ColumnCount = 1, .AutoSize = True, .AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                .Dock = DockStyle.Fill, .Padding = New Padding(16)}
+            dialog.Controls.Add(layout)
+            layout.Controls.Add(New Label With {.Text = APP_NAME, .AutoSize = True})
+            layout.Controls.Add(New Label With {
+                .Text = UiText.T("Автоматический поиск торрентов по ключевым словам."),
+                .AutoSize = True, .MaximumSize = New Size(400, 0)})
+            AddAboutLink(layout, "2019, hardhouse", "https://github.com/TorrentChecker/TorrentChecker")
+            AddAboutLink(layout, "2026, TheTitanrain", "https://github.com/TheTitanrain/TorrentChecker")
+            AddAboutLink(layout, UiText.T("Тема на RuTracker"), TrackerBase(Trackers.rutracker) & "/forum/viewtopic.php?t=992695")
+            Dim ok As New Button With {.Text = "OK", .AutoSize = True, .Anchor = AnchorStyles.Right,
+                .Margin = New Padding(3, 12, 3, 3), .DialogResult = DialogResult.OK}
+            layout.Controls.Add(ok)
+            dialog.AcceptButton = ok
+            dialog.CancelButton = ok
+            dialog.ShowDialog(Me)
+        End Using
+    End Sub
+
+    Private Sub AddAboutLink(layout As TableLayoutPanel, caption As String, url As String)
+        layout.Controls.Add(New Label With {.Text = caption, .AutoSize = True, .Margin = New Padding(3, 12, 3, 0)})
+        Dim link As New LinkLabel With {.Text = url, .AutoSize = True, .TabStop = True}
+        AddHandler link.LinkClicked, Sub() OpenBrowser(url)
+        layout.Controls.Add(link)
     End Sub
 
     Private Sub dgvKeyWords_MouseMove(sender As Object, e As MouseEventArgs) Handles dgvKeyWords.MouseMove

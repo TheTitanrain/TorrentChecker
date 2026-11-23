@@ -82,8 +82,6 @@ Partial Class frmMain
         Me.ToolStripMenuItem8 = New System.Windows.Forms.ToolStripSeparator()
         Me.msiPause = New System.Windows.Forms.ToolStripMenuItem()
         Me.msiHelp = New System.Windows.Forms.ToolStripMenuItem()
-        Me.msiHomePage = New System.Windows.Forms.ToolStripMenuItem()
-        Me.ToolStripMenuItem12 = New System.Windows.Forms.ToolStripSeparator()
         Me.msiAbout = New System.Windows.Forms.ToolStripMenuItem()
         Me.msiNewPM = New System.Windows.Forms.ToolStripMenuItem()
         Me.msiPM_ru = New System.Windows.Forms.ToolStripMenuItem()
@@ -554,19 +552,9 @@ Partial Class frmMain
         '
         'msiHelp
         '
-        Me.msiHelp.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.msiHomePage, Me.ToolStripMenuItem12, Me.msiAbout})
+        Me.msiHelp.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.msiAbout})
         Me.msiHelp.Name = "msiHelp"
         Me.msiHelp.Size = New System.Drawing.Size(68, 20)
-        '
-        'msiHomePage
-        '
-        Me.msiHomePage.Name = "msiHomePage"
-        Me.msiHomePage.Size = New System.Drawing.Size(271, 22)
-        '
-        'ToolStripMenuItem12
-        '
-        Me.ToolStripMenuItem12.Name = "ToolStripMenuItem12"
-        Me.ToolStripMenuItem12.Size = New System.Drawing.Size(268, 6)
         '
         'msiAbout
         '
@@ -803,9 +791,7 @@ Partial Class frmMain
     Friend WithEvents msiAppOptions As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents cmsTorrentColumns As System.Windows.Forms.ContextMenuStrip
     Friend WithEvents msiHelp As System.Windows.Forms.ToolStripMenuItem
-    Friend WithEvents msiHomePage As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents msiAbout As System.Windows.Forms.ToolStripMenuItem
-    Friend WithEvents ToolStripMenuItem12 As System.Windows.Forms.ToolStripSeparator
     Friend WithEvents tmrCheckUpdate As Timer
     Friend WithEvents lblShowNewVersion As Label
     Friend WithEvents msiNewPM As ToolStripMenuItem

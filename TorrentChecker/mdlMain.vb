@@ -214,7 +214,6 @@ Public Module mdlMain
     'constants
     Public APP_VERSION As String = "4.0.0"
     Public APP_NAME As String = "TorrentChecker v" & APP_VERSION
-    Public HOME_PAGE_URL As String = TrackerBase(Trackers.rutracker) & "/forum/viewtopic.php?t=992695"
     Public REGEX_TIMEOUT As TimeSpan = TimeSpan.FromMilliseconds(1000)
     Public ITEM_PADDING As New System.Windows.Forms.Padding(5, 0, 0, 0)
     Public DATETIME_FORMAT As String = "dd.MM.yyyy HH:mm:ss"
