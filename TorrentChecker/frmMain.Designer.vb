@@ -248,7 +248,7 @@ Partial Class frmMain
         Me.scMain.Size = New System.Drawing.Size(1099, 462)
         Me.scMain.SplitterDistance = 270
         Me.scMain.SplitterWidth = 5
-        Me.scMain.TabIndex = 0
+        Me.scMain.TabIndex = 2
         '
         'grpKWBox
         '
@@ -260,7 +260,7 @@ Partial Class frmMain
         Me.grpKWBox.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
         Me.grpKWBox.Name = "grpKWBox"
         Me.grpKWBox.Padding = New System.Windows.Forms.Padding(4, 3, 4, 3)
-        Me.grpKWBox.Size = New System.Drawing.Size(263, 418)
+        Me.grpKWBox.Size = New System.Drawing.Size(263, 454)
         Me.grpKWBox.TabIndex = 4
         Me.grpKWBox.TabStop = False
         '
@@ -284,7 +284,7 @@ Partial Class frmMain
         Me.dgvKeyWords.ReadOnly = True
         Me.dgvKeyWords.RowHeadersVisible = False
         Me.dgvKeyWords.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect
-        Me.dgvKeyWords.Size = New System.Drawing.Size(255, 399)
+        Me.dgvKeyWords.Size = New System.Drawing.Size(255, 435)
         Me.dgvKeyWords.TabIndex = 1
         '
         'cmsKeyWord
@@ -350,12 +350,11 @@ Partial Class frmMain
         '
         'btnAddKeyWord
         '
-        Me.btnAddKeyWord.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnAddKeyWord.Location = New System.Drawing.Point(149, 427)
+        Me.btnAddKeyWord.Location = New System.Drawing.Point(162, 27)
         Me.btnAddKeyWord.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
         Me.btnAddKeyWord.Name = "btnAddKeyWord"
         Me.btnAddKeyWord.Size = New System.Drawing.Size(114, 26)
-        Me.btnAddKeyWord.TabIndex = 3
+        Me.btnAddKeyWord.TabIndex = 1
         Me.btnAddKeyWord.UseVisualStyleBackColor = True
         '
         'tbControl
@@ -669,13 +668,15 @@ Partial Class frmMain
         '
         'lblShowNewVersion
         '
-        Me.lblShowNewVersion.AutoSize = True
+        Me.lblShowNewVersion.Anchor = System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left Or System.Windows.Forms.AnchorStyles.Right
+        Me.lblShowNewVersion.AutoEllipsis = True
         Me.lblShowNewVersion.Cursor = System.Windows.Forms.Cursors.Hand
-        Me.lblShowNewVersion.Location = New System.Drawing.Point(215, 36)
+        Me.lblShowNewVersion.Location = New System.Drawing.Point(284, 27)
         Me.lblShowNewVersion.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
         Me.lblShowNewVersion.Name = "lblShowNewVersion"
-        Me.lblShowNewVersion.Size = New System.Drawing.Size(89, 13)
+        Me.lblShowNewVersion.Size = New System.Drawing.Size(502, 26)
         Me.lblShowNewVersion.TabIndex = 9
+        Me.lblShowNewVersion.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
         Me.lblShowNewVersion.Visible = False
         '
         'trayIconPM
@@ -686,7 +687,6 @@ Partial Class frmMain
         'pGrpKWBox
         '
         Me.pGrpKWBox.Controls.Add(Me.grpKWBox)
-        Me.pGrpKWBox.Controls.Add(Me.btnAddKeyWord)
         Me.pGrpKWBox.Dock = System.Windows.Forms.DockStyle.Fill
         Me.pGrpKWBox.Location = New System.Drawing.Point(0, 0)
         Me.pGrpKWBox.Name = "pGrpKWBox"
@@ -703,6 +703,7 @@ Partial Class frmMain
         Me.Controls.Add(Me.msMain)
         Me.Controls.Add(Me.scMain)
         Me.Controls.Add(Me.txtSearch)
+        Me.Controls.Add(Me.btnAddKeyWord)
         Me.Controls.Add(Me.btnConnect)
         Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
         Me.MainMenuStrip = Me.msMain

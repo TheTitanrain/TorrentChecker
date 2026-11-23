@@ -166,6 +166,23 @@ try {
 $form = [Activator]::CreateInstance($assembly.GetType('TorrentChecker.frmMain', $true))
 try {
     $search = $form.Controls.Find('txtSearch', $true)[0]
+    $check = $form.Controls['btnConnect']
+    $add = $form.Controls['btnAddKeyWord']
+    $update = $form.Controls['lblShowNewVersion']
+    $originalSize = $form.Size
+    foreach ($size in @($form.MinimumSize, $originalSize)) {
+        $form.Size = $size
+        Assert ($check.Top -eq $add.Top -and $check.Right -lt $add.Left) 'Add follows Check now on the same row'
+        Assert ($add.Right -lt $update.Left -and $update.Width -gt 0 -and $update.Right -lt $search.Left) 'Update link fits between Add and the search field'
+    }
+    Assert ($form.GetNextControl($check, $true) -eq $add) 'Tab moves from Check now to Add'
+    foreach ($code in $saveLabels.Keys) {
+        $selectLanguage.Invoke($null, @($code))
+        $form.GetType().GetMethod('RefreshLanguage', $instanceFlags).Invoke($form, @())
+        foreach ($button in @($check, $add)) {
+            Assert ($button.PreferredSize.Width -le $button.Width) "Main button caption fits ($code): $($button.Text)"
+        }
+    }
     $search.Tag = $null
     $search.Text = 'Ubuntu 24'
     $refresh = $form.GetType().GetMethod('RefreshLanguage', $instanceFlags)
