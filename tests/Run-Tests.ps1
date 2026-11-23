@@ -1,4 +1,4 @@
-param(
+﻿param(
     [ValidateSet('Debug', 'Release')]
     [string]$Configuration = 'Release'
 )
@@ -125,6 +125,44 @@ foreach ($invalidXml in @('<html/>', '<feed/>', '<feed')) {
     Assert $rejected 'Reject non-Atom or malformed responses'
 }
 
+$uiText = $assembly.GetType('TorrentChecker.UiText', $true)
+$selectLanguage = $uiText.GetMethod('SelectLanguage', $staticFlags)
+foreach ($resource in $assembly.GetManifestResourceNames() -clike '*.tsv') {
+    $reader = New-Object IO.StreamReader($assembly.GetManifestResourceStream($resource))
+    try {
+        while ($null -ne ($line = $reader.ReadLine())) {
+            $fields = $line.Split([char]9)
+            Assert ($fields.Count -eq 5 -and $fields -notcontains '') "Incomplete translation in $resource"
+            $tokens = [regex]::Matches($fields[0], '\{\d+\}|%[A-Za-z]+%') | ForEach-Object { $_.Value } | Sort-Object
+            foreach ($field in $fields[1..4]) {
+                $translatedTokens = [regex]::Matches($field, '\{\d+\}|%[A-Za-z]+%') | ForEach-Object { $_.Value } | Sort-Object
+                Assert (($tokens -join ',') -ceq ($translatedTokens -join ',')) "Changed placeholder in $field"
+            }
+        }
+    } finally { $reader.Dispose() }
+}
+$saveLabels = @{'ru'='Сохранить'; 'en'='Save'; 'uk'='Зберегти'; 'kk'='Сақтау'; 'be'='Захаваць'}
+foreach ($code in $saveLabels.Keys) {
+    $selectLanguage.Invoke($null, @($code))
+    $form = [Activator]::CreateInstance($assembly.GetType('TorrentChecker.frmAppOptions', $true))
+    try {
+        Assert ($form.Controls.Find('btnSave', $true)[0].Text -ceq $saveLabels[$code]) "Options button in $code"
+    } finally { $form.Dispose() }
+}
+$selectLanguage.Invoke($null, @('ru'))
+$form = [Activator]::CreateInstance($assembly.GetType('TorrentChecker.frmAppOptions', $true))
+try {
+    $form.ShowInTaskbar = $false
+    $form.Opacity = 0
+    $form.Show()
+    $choice = $form.Controls.Find('languageChoice', $true)[0]
+    Assert ($choice.SelectedItem -ceq 'Русский') 'Options restore the current language on open'
+    $choice.SelectedItem = 'English'
+    $form.Controls.Find('btnCancel', $true)[0].PerformClick()
+    $form.Show()
+    Assert ($choice.SelectedItem -ceq 'Русский') 'Cancel discards the pending language selection'
+} finally { $form.Dispose() }
+
 # Construct windows without showing them or running Load handlers. This verifies
 # compiled WinForms resources without network requests or user settings writes.
 foreach ($name in @('frmMain', 'frmKeyWord', 'frmCredentials', 'frmForums', 'frmAppOptions')) {
@@ -153,6 +191,9 @@ function Invoke-Store($store, [string]$method, [object[]]$arguments) {
         for ($i = 0; $i -lt $arguments.Length; $i++) {
             if ($null -ne $arguments[$i]) { $arguments[$i] = $arguments[$i].PSObject.BaseObject }
         }
+    }
+    if ($method -eq 'Load' -and $arguments.Length -eq 1) {
+        $arguments = @($arguments[0], $null)
     }
     return ,$storeType.GetMethod($method, $instanceFlags).Invoke($store, $arguments)
 }
@@ -275,6 +316,7 @@ try {
 
     $data = Invoke-Store $store Load @($accept)
     $manifest = Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json
+    Assert ($data['AppOptions']['language'] -ceq 'ru') 'Legacy settings default to Russian'
     $initialManifest = $manifest
     Assert ((Get-FileHash -LiteralPath $legacyPath).Hash -eq $legacyHash) 'Legacy migration preserves original bytes'
     Assert (($data['KwListToParamsMapping'] -join ',') -eq '0,7,2,9') 'Preserve rule IDs and display order'
@@ -285,6 +327,7 @@ try {
     Assert ($manifest.rules.'7'.client_command_template -ceq $newClientCommand -and
             $rules[7]['client_command_line'] -ceq $legacyClientCommand) 'Legacy conversion writes normalized command without changing original rules'
     $oldJson = Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json
+    $oldJson.options.PSObject.Properties.Remove('language')
     foreach ($id in @(7, 2, 9)) {
         $rule = $oldJson.rules.PSObject.Properties[[string]$id].Value
         $rule.PSObject.Properties.Remove('client_command_template')
@@ -295,6 +338,12 @@ try {
     Assert ($fromOldJson['KeyWordsParams'][7]['client_command_template'] -ceq $newClientCommand -and
             $fromOldJson['KeyWordsParams'][2]['client_command_template'] -ceq '' -and
             $fromOldJson['KeyWordsParams'][9]['client_command_template'] -ceq $literalClientCommand) 'Old JSON migrates all rule types and legacy token casing'
+    Assert ($fromOldJson['AppOptions']['language'] -ceq 'ru') 'Missing language in old JSON defaults to Russian'
+    Add-Member -InputObject $oldJson.options -NotePropertyName language -NotePropertyValue 'unknown'
+    [IO.File]::WriteAllText($settingsPath, ($oldJson | ConvertTo-Json -Depth 30))
+    $unknownLanguage = Invoke-Store (New-Store $root) Load @($unexpected)
+    Assert ($unknownLanguage['AppOptions']['language'] -ceq 'ru') 'Unsupported UI language defaults to Russian'
+    $data['AppOptions']['language'] = 'kk'
     $data['KeyWordsParams'][2]['client_command_template'] = '%ClientPath% %TorrentSource%'
     $data['KeyWordsParams'][7]['client_command_template'] = ''
     Assert ($data['KeyWordsParams'][2]['count_of_new'] -eq '-1') 'Preserve signed legacy unread counts'
@@ -341,6 +390,16 @@ try {
     }
     Assert ($rawJson.Contains([Environment]::NewLine) -and -not $rawJson.Contains('dtFoundTorrents')) 'Settings are formatted and omit history tables'
     $reloaded = Invoke-Store (New-Store $root) Load @($unexpected)
+    $startupLanguage = [Delegate]::CreateDelegate([Action[object]], $selectLanguage)
+    $null = Invoke-Store (New-Store $root) Load @($unexpected, $startupLanguage)
+    $startupForm = [Activator]::CreateInstance($assembly.GetType('TorrentChecker.frmAppOptions', $true))
+    try {
+        Assert ($startupForm.Controls.Find('btnSave', $true)[0].Text -ceq $saveLabels['kk']) 'Startup settings localize the first form'
+    } finally {
+        $startupForm.Dispose()
+        $selectLanguage.Invoke($null, @('ru'))
+    }
+    Assert ($reloaded['AppOptions']['language'] -ceq 'kk') 'Selected language survives save and reload'
     Assert ($reloaded['proxyCredential'].Password -ceq $proxySecret -and
             $reloaded['proxyCredential'].UserName -ceq $user) 'Restore proxy credentials from Windows vault'
     Assert ($reloaded['KeyWordsParams'][7]['client_command_template'] -ceq '' -and

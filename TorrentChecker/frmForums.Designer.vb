@@ -43,7 +43,7 @@ Partial Class frmForums
         Me.btnAccept.Name = "btnAccept"
         Me.btnAccept.Size = New System.Drawing.Size(98, 26)
         Me.btnAccept.TabIndex = 4
-        Me.btnAccept.Text = "Применить"
+        Me.btnAccept.Text = UiText.T("Применить")
         Me.btnAccept.UseVisualStyleBackColor = True
         '
         'btnCancel
@@ -52,7 +52,7 @@ Partial Class frmForums
         Me.btnCancel.Name = "btnCancel"
         Me.btnCancel.Size = New System.Drawing.Size(98, 26)
         Me.btnCancel.TabIndex = 5
-        Me.btnCancel.Text = "Отмена"
+        Me.btnCancel.Text = UiText.T("Отмена")
         Me.btnCancel.UseVisualStyleBackColor = True
         '
         'grpFormatsBox
@@ -63,7 +63,7 @@ Partial Class frmForums
         Me.grpFormatsBox.Size = New System.Drawing.Size(546, 185)
         Me.grpFormatsBox.TabIndex = 6
         Me.grpFormatsBox.TabStop = False
-        Me.grpFormatsBox.Text = "Выбранные форматы"
+        Me.grpFormatsBox.Text = UiText.T("Выбранные форматы")
         '
         'grpForumsBox
         '
@@ -75,7 +75,7 @@ Partial Class frmForums
         Me.grpForumsBox.Size = New System.Drawing.Size(546, 244)
         Me.grpForumsBox.TabIndex = 0
         Me.grpForumsBox.TabStop = False
-        Me.grpForumsBox.Text = "Выбранные форумы"
+        Me.grpForumsBox.Text = UiText.T("Выбранные форумы")
         '
         'lblFilter
         '
@@ -86,7 +86,7 @@ Partial Class frmForums
         Me.lblFilter.Name = "lblFilter"
         Me.lblFilter.Size = New System.Drawing.Size(118, 13)
         Me.lblFilter.TabIndex = 3
-        Me.lblFilter.Text = "Фильтр по названию:"
+        Me.lblFilter.Text = UiText.T("Фильтр по названию:")
         '
         'txtFilter
         '
@@ -104,7 +104,7 @@ Partial Class frmForums
         Me.chkAutoLabel.Name = "chkAutoLabel"
         Me.chkAutoLabel.Size = New System.Drawing.Size(281, 17)
         Me.chkAutoLabel.TabIndex = 7
-        Me.chkAutoLabel.Text = "Использовать автоматическое назначение метки"
+        Me.chkAutoLabel.Text = UiText.T("Использовать автоматическое назначение метки")
         Me.chkAutoLabel.UseVisualStyleBackColor = True
         '
         'lsvForums
@@ -154,7 +154,7 @@ Partial Class frmForums
         Me.MinimizeBox = False
         Me.Name = "frmForums"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent
-        Me.Text = "Выбор форума"
+        Me.Text = UiText.T("Выбор форума")
         Me.grpFormatsBox.ResumeLayout(False)
         Me.grpForumsBox.ResumeLayout(False)
         Me.grpForumsBox.PerformLayout()

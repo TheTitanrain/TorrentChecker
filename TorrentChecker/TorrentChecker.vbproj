@@ -109,6 +109,8 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Languages\*.tsv" />
+    <Compile Include="UiText.vb" />
     <Compile Include="ApplicationEvents.vb" />
     <Compile Include="clsCredentialStore.vb" />
     <Compile Include="clsSettingsJson.vb" />

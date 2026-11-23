@@ -21,7 +21,7 @@
 
     Private Sub frmCredentials_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Me.Icon = TRAY_ICON
-        Me.Text = "Авторизация"
+        Me.Text = UiText.T("Авторизация")
 
         chkUseProxy.Checked = ProxySettings("use_proxy")
         txtProxyAddress.Text = ProxySettings("proxy_address")
@@ -48,34 +48,34 @@
     Private Function MakeChecks(proxy As Dictionary(Of String, Object)) As Boolean
         If (chkUseProxy.Checked OrElse txtProxyLogin.TextLength > 0 OrElse txtProxyPassword.TextLength > 0) AndAlso
            clsSettingsStore.ProxyEndpoint(proxy) Is Nothing Then
-            MsgBox("Некорректный адрес или порт прокси-сервера.", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Некорректный адрес или порт прокси-сервера."), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
             txtProxyAddress.Focus()
             Return False
         End If
 
         If txtLogin_rt.TextLength > 0 And txtPassword_rt.TextLength = 0 Then
-            MsgBox("Пароль от " & TrackerParams(Trackers.rutracker)("tracker_name") & " не может быть пустым!", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(String.Format(UiText.T("Пароль от {0} не может быть пустым!"), TrackerParams(Trackers.rutracker)("tracker_name")), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
             tbCredentialsControl.SelectedTab = TabPage_rutracker
             txtPassword_rt.Focus()
             Return False
         End If
 
         If txtLogin_rt.TextLength = 0 And txtPassword_rt.TextLength > 0 Then
-            MsgBox("Логин от " & TrackerParams(Trackers.rutracker)("tracker_name") & " не может быть пустым!", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(String.Format(UiText.T("Логин от {0} не может быть пустым!"), TrackerParams(Trackers.rutracker)("tracker_name")), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
             tbCredentialsControl.SelectedTab = TabPage_rutracker
             txtLogin_rt.Focus()
             Return False
         End If
 
         If txtLogin_kz.TextLength > 0 And txtPassword_kz.TextLength = 0 Then
-            MsgBox("Пароль от " & TrackerParams(Trackers.kinozal)("tracker_name") & " не может быть пустым!", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(String.Format(UiText.T("Пароль от {0} не может быть пустым!"), TrackerParams(Trackers.kinozal)("tracker_name")), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
             tbCredentialsControl.SelectedTab = TabPage_kinozal
             txtPassword_kz.Focus()
             Return False
         End If
 
         If txtLogin_kz.TextLength = 0 And txtPassword_kz.TextLength > 0 Then
-            MsgBox("Логин от " & TrackerParams(Trackers.kinozal)("tracker_name") & " не может быть пустым!", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(String.Format(UiText.T("Логин от {0} не может быть пустым!"), TrackerParams(Trackers.kinozal)("tracker_name")), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
             tbCredentialsControl.SelectedTab = TabPage_kinozal
             txtLogin_kz.Focus()
             Return False
@@ -85,7 +85,7 @@
             For Each idx As Integer In KeyWordsParams.Keys
                 If idx = 0 Then Continue For
                 If CBool(KeyWordsParams(idx)(Trackers.kinozal.ToString)) Then
-                    MsgBox("Нельзя удалять данные от " & TrackerParams(Trackers.kinozal)("tracker_name") & ", т.к. он используется для " & KeyWordsParams(idx)("label"), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+                    MsgBox(String.Format(UiText.T("Нельзя удалять данные от {0}, т.к. он используется для {1}"), TrackerParams(Trackers.kinozal)("tracker_name"), KeyWordsParams(idx)("label")), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
                     tbCredentialsControl.SelectedTab = TabPage_kinozal
                     txtLogin_kz.Focus()
                     Return False
@@ -209,7 +209,7 @@
             Dim url As String = TrackerParams(Trackers.rutracker)("registration_url")
             System.Diagnostics.Process.Start(url)
         Catch ex As Exception
-            MsgBox("Не могу открыть браузер" & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Не могу открыть браузер") & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
         End Try
     End Sub
 
@@ -218,7 +218,7 @@
             Dim url As String = TrackerParams(Trackers.kinozal)("registration_url")
             System.Diagnostics.Process.Start(url)
         Catch ex As Exception
-            MsgBox("Не могу открыть браузер" & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Не могу открыть браузер") & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
         End Try
     End Sub
 End Class

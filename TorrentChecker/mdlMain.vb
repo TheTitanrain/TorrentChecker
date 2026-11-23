@@ -185,6 +185,7 @@ Public Module mdlMain
     }
     Public AppOptions As New Dictionary(Of String, Object) From
     {
+        {"language", "ru"},
         {"hide_to_tray", False},
         {"close_to_tray", False},
         {"run_hidden", False},
@@ -320,6 +321,11 @@ Public Module mdlMain
 
             minutes = Math.DivRem(total_seconds, 60, seconds)
 
+            If Not UiText.IsRussian Then
+                If minutes = 0 Then Return String.Format(UiText.T("{0} с назад"), seconds)
+                Return String.Format(UiText.T("{0} мин {1} с назад"), minutes, seconds)
+            End If
+
             If minutes = 0 Then
                 ret = String.Format("{0} {1} назад", seconds, GetWordDeclension(CStr(seconds), "секунд"))
             Else
@@ -416,7 +422,7 @@ Public Module mdlMain
         ret = Regex.Match(str, "<li>Инфо хеш: (.+?)</li>", RegexOptions.IgnoreCase, REGEX_TIMEOUT).Groups(1).Value
 
         If ret.Length = 0 Then
-            Throw New Exception("Empty infohash.")
+            Throw New Exception(UiText.T("Отсутствует хеш раздачи."))
         End If
 
         Return ret

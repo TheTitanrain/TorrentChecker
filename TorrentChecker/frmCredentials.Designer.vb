@@ -69,7 +69,7 @@ Partial Class frmCredentials
         Me.grpProxyBox.Size = New System.Drawing.Size(533, 141)
         Me.grpProxyBox.TabIndex = 2
         Me.grpProxyBox.TabStop = False
-        Me.grpProxyBox.Text = "Прокси-сервер"
+        Me.grpProxyBox.Text = UiText.T("Прокси-сервер")
         '
         'txtProxyPort
         '
@@ -88,7 +88,7 @@ Partial Class frmCredentials
         Me.Label6.Name = "Label6"
         Me.Label6.Size = New System.Drawing.Size(35, 13)
         Me.Label6.TabIndex = 3
-        Me.Label6.Text = "Порт:"
+        Me.Label6.Text = UiText.T("Порт:")
         '
         'Label5
         '
@@ -97,7 +97,7 @@ Partial Class frmCredentials
         Me.Label5.Name = "Label5"
         Me.Label5.Size = New System.Drawing.Size(41, 13)
         Me.Label5.TabIndex = 2
-        Me.Label5.Text = "Адрес:"
+        Me.Label5.Text = UiText.T("Адрес:")
         '
         'txtProxyAddress
         '
@@ -115,14 +115,14 @@ Partial Class frmCredentials
         Me.chkUseProxy.Name = "chkUseProxy"
         Me.chkUseProxy.Size = New System.Drawing.Size(177, 17)
         Me.chkUseProxy.TabIndex = 0
-        Me.chkUseProxy.Text = "Использовать прокси-сервер"
+        Me.chkUseProxy.Text = UiText.T("Использовать прокси-сервер")
         Me.chkUseProxy.UseVisualStyleBackColor = True
         '
         'Proxy credentials
         '
         Me.lblProxyLogin.AutoSize = True
         Me.lblProxyLogin.Location = New System.Drawing.Point(11, 77)
-        Me.lblProxyLogin.Text = "Логин:"
+        Me.lblProxyLogin.Text = UiText.T("Логин:")
         Me.txtProxyLogin.Enabled = False
         Me.txtProxyLogin.Location = New System.Drawing.Point(78, 74)
         Me.txtProxyLogin.MaxLength = 100
@@ -131,7 +131,7 @@ Partial Class frmCredentials
         Me.txtProxyLogin.TabIndex = 5
         Me.lblProxyPassword.AutoSize = True
         Me.lblProxyPassword.Location = New System.Drawing.Point(11, 103)
-        Me.lblProxyPassword.Text = "Пароль:"
+        Me.lblProxyPassword.Text = UiText.T("Пароль:")
         Me.txtProxyPassword.Enabled = False
         Me.txtProxyPassword.Location = New System.Drawing.Point(78, 100)
         Me.txtProxyPassword.MaxLength = 100
@@ -146,7 +146,7 @@ Partial Class frmCredentials
         Me.btnSave.Name = "btnSave"
         Me.btnSave.Size = New System.Drawing.Size(98, 26)
         Me.btnSave.TabIndex = 4
-        Me.btnSave.Text = "Сохранить"
+        Me.btnSave.Text = UiText.T("Сохранить")
         Me.btnSave.UseVisualStyleBackColor = True
         '
         'btnCancel
@@ -155,7 +155,7 @@ Partial Class frmCredentials
         Me.btnCancel.Name = "btnCancel"
         Me.btnCancel.Size = New System.Drawing.Size(98, 26)
         Me.btnCancel.TabIndex = 5
-        Me.btnCancel.Text = "Отмена"
+        Me.btnCancel.Text = UiText.T("Отмена")
         Me.btnCancel.UseVisualStyleBackColor = True
         '
         'Label1
@@ -165,7 +165,7 @@ Partial Class frmCredentials
         Me.Label1.Name = "Label1"
         Me.Label1.Size = New System.Drawing.Size(41, 13)
         Me.Label1.TabIndex = 0
-        Me.Label1.Text = "Логин:"
+        Me.Label1.Text = UiText.T("Логин:")
         '
         'txtLogin_rt
         '
@@ -191,7 +191,7 @@ Partial Class frmCredentials
         Me.Label2.Name = "Label2"
         Me.Label2.Size = New System.Drawing.Size(48, 13)
         Me.Label2.TabIndex = 2
-        Me.Label2.Text = "Пароль:"
+        Me.Label2.Text = UiText.T("Пароль:")
         '
         'tbCredentialsControl
         '
@@ -226,7 +226,7 @@ Partial Class frmCredentials
         Me.lblRegistration_rt.Name = "lblRegistration_rt"
         Me.lblRegistration_rt.Size = New System.Drawing.Size(72, 13)
         Me.lblRegistration_rt.TabIndex = 4
-        Me.lblRegistration_rt.Text = "Регистрация"
+        Me.lblRegistration_rt.Text = UiText.T("Регистрация")
         '
         'TabPage_kinozal
         '
@@ -251,7 +251,7 @@ Partial Class frmCredentials
         Me.lblRegistration_kz.Name = "lblRegistration_kz"
         Me.lblRegistration_kz.Size = New System.Drawing.Size(72, 13)
         Me.lblRegistration_kz.TabIndex = 8
-        Me.lblRegistration_kz.Text = "Регистрация"
+        Me.lblRegistration_kz.Text = UiText.T("Регистрация")
         '
         'txtPassword_kz
         '
@@ -269,7 +269,7 @@ Partial Class frmCredentials
         Me.Label3.Name = "Label3"
         Me.Label3.Size = New System.Drawing.Size(48, 13)
         Me.Label3.TabIndex = 6
-        Me.Label3.Text = "Пароль:"
+        Me.Label3.Text = UiText.T("Пароль:")
         '
         'txtLogin_kz
         '
@@ -286,7 +286,7 @@ Partial Class frmCredentials
         Me.Label4.Name = "Label4"
         Me.Label4.Size = New System.Drawing.Size(41, 13)
         Me.Label4.TabIndex = 4
-        Me.Label4.Text = "Логин:"
+        Me.Label4.Text = UiText.T("Логин:")
         '
         'frmCredentials
         '
@@ -303,7 +303,7 @@ Partial Class frmCredentials
         Me.MinimizeBox = False
         Me.Name = "frmCredentials"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent
-        Me.Text = "Авторизация"
+        Me.Text = UiText.T("Авторизация")
         Me.grpProxyBox.ResumeLayout(False)
         Me.grpProxyBox.PerformLayout()
         Me.tbCredentialsControl.ResumeLayout(False)

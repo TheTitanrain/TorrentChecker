@@ -12,7 +12,7 @@ Module mdlSettings
         loaded = SettingsStore.Load(
             Function() MessageBox.Show("Импортировать старый settings.dat? Продолжайте, только если файл создан вашей копией TorrentChecker и вы доверяете его источнику.",
                                        "Перенос настроек TorrentChecker", MessageBoxButtons.YesNo,
-                                       MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) = DialogResult.Yes)
+                                       MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) = DialogResult.Yes, AddressOf UiText.SelectLanguage)
     End Sub
 
     Public Sub SaveSettings()
@@ -37,7 +37,7 @@ Module mdlSettings
     End Function
 
     Private Sub ShowSaveError(ex As Exception)
-        MsgBox("Ошибка при записи настроек!" & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+        MsgBox(UiText.T("Ошибка при записи настроек!") & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
     End Sub
 
     Private Sub WriteSettings(proxy As Dictionary(Of String, Object), proxyAuth As NetworkCredential,
@@ -108,13 +108,13 @@ Module mdlSettings
             frmMain.dgvKeyWords.Rows.Add(image, rule("label"))
             frmMain.dgvKeyWords.Rows(rowIndex).Cells("kw_item").Style.Padding = ITEM_PADDING
         Next
-        frmMain.grpKWBox.Text = "Ключевые фразы: " & UBound(KwListToParamsMapping)
+        frmMain.grpKWBox.Text = String.Format(UiText.T("Ключевые фразы: {0}"), UBound(KwListToParamsMapping))
 
         Dim columns(dgvTorrentsColumns.Count - 1) As DataGridViewTextBoxColumn
         For Each column In dgvTorrentsColumns
             Dim layout = column.Value
             columns(CInt(layout("index"))) = New DataGridViewTextBoxColumn With {
-                .HeaderText = layout("name"), .DataPropertyName = column.Key, .Name = column.Key,
+                .HeaderText = UiText.T(CStr(layout("name"))), .DataPropertyName = column.Key, .Name = column.Key,
                 .Width = layout("width"), .Visible = layout("visibility"), .DisplayIndex = layout("index")
             }
         Next

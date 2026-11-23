@@ -29,7 +29,7 @@ Friend NotInheritable Class clsSettingsStore
         Return New FileStream(Path.Combine(directory, ".settings.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None)
     End Function
 
-    Friend Function Load(confirmImport As Func(Of Boolean)) As Dictionary(Of String, Object)
+    Friend Function Load(confirmImport As Func(Of Boolean), Optional selectLanguage As Action(Of Object) = Nothing) As Dictionary(Of String, Object)
         Dim json As String
         Try
             json = File.ReadAllText(settingsPath, Encoding.UTF8)
@@ -41,7 +41,15 @@ Friend NotInheritable Class clsSettingsStore
         End Try
         Dim serializer = JsonSerializer()
         Dim wire = serializer.Deserialize(Of Dictionary(Of String, Object))(json)
-        If Not Object.Equals(wire("version"), FormatVersion) Then Throw New InvalidDataException("Версия settings.json не поддерживается.")
+        If selectLanguage IsNot Nothing Then
+            Dim section As Object = Nothing
+            Dim language As Object = Nothing
+            wire.TryGetValue("options", section)
+            Dim options = TryCast(section, Dictionary(Of String, Object))
+            If options IsNot Nothing Then options.TryGetValue("language", language)
+            selectLanguage(language)
+        End If
+        If Not Object.Equals(wire("version"), FormatVersion) Then Throw New InvalidDataException(UiText.T("Версия settings.json не поддерживается."))
         historyId = ReadId(wire, "historyId")
         credentialId = ReadId(wire, "credentialId")
         Dim data = DecodeSettings(wire)
@@ -74,7 +82,7 @@ Friend NotInheritable Class clsSettingsStore
                     Return DirectCast(formatter.Deserialize(gzip), Dictionary(Of String, Object))
                 End Using
             Catch ex As Exception
-                Throw New InvalidDataException("Не удалось прочитать старый settings.dat. Исходный файл сохранён.")
+                Throw New InvalidDataException(UiText.T("Не удалось прочитать старый settings.dat. Исходный файл сохранён."))
             End Try
         End Using
     End Function
@@ -168,7 +176,7 @@ Friend NotInheritable Class clsSettingsStore
         Dim id As Guid
         Dim value = TryCast(wire(name), String)
         If value Is Nothing OrElse value.Length <> 32 OrElse Not Guid.TryParseExact(value, "N", id) Then
-            Throw New InvalidDataException("Неверная ссылка в settings.json.")
+            Throw New InvalidDataException(UiText.T("Неверная ссылка в settings.json."))
         End If
         Return id.ToString("N")
     End Function
@@ -206,7 +214,7 @@ Friend NotInheritable Class clsSettingsStore
         SaveTracker(data, id, "kinozal", "username", "password")
         Dim value As NetworkCredential = If(data.ContainsKey("proxyCredential"), DirectCast(data("proxyCredential"), NetworkCredential), Nothing)
         If value IsNot Nothing AndAlso (value.UserName.Length <> 0 OrElse value.Password.Length <> 0) Then
-            If proxy Is Nothing Then Throw New InvalidDataException("Некорректный адрес или порт прокси.")
+            If proxy Is Nothing Then Throw New InvalidDataException(UiText.T("Некорректный адрес или порт прокси."))
             WriteCredential(Target(id, "proxy"), value.UserName, value.Password, proxy.AbsoluteUri)
         End If
     End Sub

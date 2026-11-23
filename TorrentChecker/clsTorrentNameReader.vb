@@ -109,6 +109,6 @@ Friend NotInheritable Class clsTorrentNameReader
     End Function
 
     Private Shared Sub Fail()
-        Throw New InvalidDataException("Invalid torrent bencode.")
+        Throw New InvalidDataException(UiText.T("Неверная структура торрент-файла."))
     End Sub
 End Class

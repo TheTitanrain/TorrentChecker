@@ -42,7 +42,7 @@ Public Class clsHTTP
         Dim auth As NetworkCredential = Nothing
         If CBool(settings("use_proxy")) Then
             endpoint = clsSettingsStore.ProxyEndpoint(settings)
-            If endpoint Is Nothing Then Throw New ArgumentException("Некорректный адрес или порт прокси.")
+            If endpoint Is Nothing Then Throw New ArgumentException(UiText.T("Некорректный адрес или порт прокси."))
             If credentials.UserName.Length <> 0 OrElse credentials.Password.Length <> 0 Then auth = credentials
         End If
         If Object.Equals(proxyEndpoint, endpoint) AndAlso Object.ReferenceEquals(proxyAuth, auth) Then Return
@@ -90,7 +90,7 @@ Public Class clsHTTP
         Catch ex As TaskCanceledException
             If Not token.IsCancellationRequested Then
                 'timed out
-                Throw New TimeoutException("The operation has timed out.", New Exception(Url))
+                Throw New TimeoutException(UiText.T("Истекло время ожидания."), New Exception(Url))
             End If
 
             ret.Success = False
@@ -135,7 +135,7 @@ Public Class clsHTTP
         Catch ex As TaskCanceledException
             If Not token.IsCancellationRequested Then
                 'timed out
-                Throw New TimeoutException("The operation has timed out.", New Exception(Url))
+                Throw New TimeoutException(UiText.T("Истекло время ожидания."), New Exception(Url))
             End If
 
             ret.Success = False

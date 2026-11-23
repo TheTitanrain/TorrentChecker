@@ -4,7 +4,7 @@ Imports System.Text.RegularExpressions
 Imports System.Threading
 
 Public Class frmMain
-    Private ReadOnly openMagnetMenu As New ToolStripMenuItem("Открыть magnet в торрент-клиенте")
+    Private ReadOnly openMagnetMenu As New ToolStripMenuItem(UiText.T("Открыть magnet в торрент-клиенте"))
     Private HTTP As New clsHTTP
     Private HTTPUpdate As New clsHTTP
     Private HTTPUpdateResult As clsHTTP.HTTPResult
@@ -45,7 +45,7 @@ Public Class frmMain
             e.Cancel = True
             Exit Sub
         ElseIf e.CloseReason = CloseReason.UserClosing Then
-            If AppOptions("confirm_exit") AndAlso MsgBox("Действительно хотите выйти из программы?", MsgBoxStyle.Question + MsgBoxStyle.YesNo + vbDefaultButton2) = MsgBoxResult.No Then
+            If AppOptions("confirm_exit") AndAlso MsgBox(UiText.T("Действительно хотите выйти из программы?"), MsgBoxStyle.Question + MsgBoxStyle.YesNo + vbDefaultButton2) = MsgBoxResult.No Then
                 e.Cancel = True
                 isFormQueryToUnload = False
                 Exit Sub
@@ -59,7 +59,7 @@ Public Class frmMain
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Try
             trayIcon.Text = APP_NAME
-            trayIconPM.Text = APP_NAME & vbCrLf & "Eсть новые персональные сообщения!"
+            trayIconPM.Text = APP_NAME & vbCrLf & UiText.T("Eсть новые персональные сообщения!")
 
             HideCaptchaTab()
             AddHandler bsrcFoundTorrents.CurrentChanged, AddressOf bsrcFoundTorrents_CurrentChanged
@@ -121,7 +121,7 @@ Public Class frmMain
 
             CheckLatestUpdate()
         Catch ex As Exception
-            MsgBox("Ошибка загрузки программы!" & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Ошибка загрузки программы!") & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
             If Not isFormLoaded Then
                 Environment.ExitCode = 1
                 Close()
@@ -149,7 +149,7 @@ Public Class frmMain
         dgvKeyWords.Columns.Add(img_col)
         dgvKeyWords.Columns.Add(kw_col)
 
-        dgvKeyWords.Rows.Add(IMAGE_ALL_KW, KeyWordsParams(0)("label"))
+        dgvKeyWords.Rows.Add(IMAGE_ALL_KW, UiText.T("Все"))
         'dgvKeyWords.Rows(0).Cells("kw_item").Style.Font = FONT_BOLD
         dgvKeyWords.Rows(0).Cells("kw_item").Style.ForeColor = Color.Gray
     End Sub
@@ -168,7 +168,7 @@ Public Class frmMain
     Private Sub btnConnect_Click(sender As Object, e As EventArgs) Handles btnConnect.Click
         'check for keywords
         If UBound(KwListToParamsMapping) < 1 Then
-            MsgBox("Добавьте как минимум одно ключевое слово!", MsgBoxStyle.Exclamation + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Добавьте как минимум одно ключевое слово!"), MsgBoxStyle.Exclamation + MsgBoxStyle.OkOnly)
             btnAddKeyWord_Click(sender, New EventArgs)
             'check again
             If UBound(KwListToParamsMapping) < 1 Then Exit Sub
@@ -223,7 +223,7 @@ Public Class frmMain
             'reset time counters
             tmrStartChecking.Enabled = False
             LAST_CHECK_TIME = UNIX_TIME_ORIGIN
-            tssLabel.Text = "Идет проверка..."
+            tssLabel.Text = UiText.T("Идет проверка...")
 
             If APP_PAUSED Then
                 'cancel pause
@@ -274,10 +274,10 @@ Public Class frmMain
                                     logged_result = CheckLogged(HTTPResult.Result, tracker_id)
                                     If logged_result.Status = LoggedResult.LoggedStatuses.no_logged Then
                                         TrackerParams(tracker_id)("is_tracker_failure") = True
-                                        LogOutput(String.Format("{0} ({1})", "Ошибка авторизации", tracker_name), True, HTTPResult.Result)
+                                        LogOutput(String.Format("{0} ({1})", UiText.T("Ошибка авторизации"), tracker_name), True, HTTPResult.Result)
                                     ElseIf logged_result.Status = LoggedResult.LoggedStatuses.need_captcha Then
                                         TrackerParams(tracker_id)("is_tracker_failure") = True
-                                        LogOutput(String.Format("{0} ({1}): {2}", "Ошибка авторизации", tracker_name, "нужно ввести капчу"))
+                                        LogOutput(String.Format("{0} ({1}): {2}", UiText.T("Ошибка авторизации"), tracker_name, UiText.T("нужно ввести капчу")))
 
                                         ShowCaptchaTab(tracker_id, logged_result)
                                     Else
@@ -322,7 +322,7 @@ Public Class frmMain
                                                     End If
                                                 Catch ex As Exception
                                                     If Not IsCurrentScan(generation, cts) Then Return
-                                                    LogOutput(String.Format("{0} '{1}' ({2}): {3}", "Ошибка получения уникального идентификатора для", dr(Columns.topic_name.ToString), tracker_name, GetProperExceptionText(ex)))
+                                                    LogOutput(String.Format("{0} '{1}' ({2}): {3}", UiText.T("Ошибка получения уникального идентификатора для"), dr(Columns.topic_name.ToString), tracker_name, GetProperExceptionText(ex)))
                                                     TrackerParseResult.Result.Rows.Remove(dr)
                                                 End Try
                                             Next
@@ -337,11 +337,11 @@ Public Class frmMain
                                         new_torrents_dt.Merge(TrackerParseResult.Result)
                                     ElseIf TrackerParseResult.Status = clsParse.ParseResult.ParseStatuses.forum_off Then
                                         TrackerParams(tracker_id)("is_tracker_failure") = True
-                                        LogOutput(String.Format("{0} ({1}): {2}", "Ошибка парсинга", tracker_name, TrackerParseResult.Result.Rows(0)(Columns.forum_text.ToString)))
+                                        LogOutput(String.Format("{0} ({1}): {2}", UiText.T("Ошибка парсинга"), tracker_name, TrackerParseResult.Result.Rows(0)(Columns.forum_text.ToString)))
                                     Else
                                         CheckLogged(HTTPResult.Result, tracker_id)
                                         TrackerParams(tracker_id)("is_tracker_failure") = True
-                                        LogOutput(String.Format("{0} ({1})", "Ошибка парсинга", tracker_name), True, HTTPResult.Result)
+                                        LogOutput(String.Format("{0} ({1})", UiText.T("Ошибка парсинга"), tracker_name), True, HTTPResult.Result)
                                     End If
                                 Else
                                     Exit For
@@ -350,7 +350,7 @@ Public Class frmMain
                         End If
                     Catch ex As Exception
                         If Not IsCurrentScan(generation, cts) Then Return
-                        LogOutput(String.Format("{0} ({1}): {2}", "Ошибка проверки", tracker_name, GetProperExceptionText(ex)))
+                        LogOutput(String.Format("{0} ({1}): {2}", UiText.T("Ошибка проверки"), tracker_name, GetProperExceptionText(ex)))
                     End Try
                 Next
 
@@ -385,7 +385,7 @@ Public Class frmMain
                     Catch ex As Exception
                         If Not IsCurrentScan(generation, cts) Then Return
                         regex_filter_succeeded = False
-                        LogOutput(String.Format("{0} ({1}): {2}", "Ошибка выражения для ручного фильтра", local_KeyWordsParams("additional_filter_text"), GetProperExceptionText(ex)))
+                        LogOutput(String.Format("{0} ({1}): {2}", UiText.T("Ошибка выражения для ручного фильтра"), local_KeyWordsParams("additional_filter_text"), GetProperExceptionText(ex)))
                     End Try
                 End If
 
@@ -487,13 +487,13 @@ Public Class frmMain
                             KeyWordsParams(params_idx)("count_of_new") = CStr(cnt_new)
 
                             ShowCountOfNewTorrents(params_idx)
-                            Dim tray_message As String = String.Format("Метка: {0}{1}Новых: {2}{1}Всего непрочитанных: {3}{1}Последний найденный: {4}",
+                            Dim tray_message As String = String.Format(UiText.T("Метка: {0}{1}Новых: {2}{1}Всего непрочитанных: {3}{1}Последний найденный: {4}"),
                                                                        KeyWordsParams(params_idx)("label"),
                                                                        vbCrLf,
                                                                        Math.Min(new_torrents_dt.Rows.Count, TORRENTS_MAX_RESULTS),
                                                                        KeyWordsParams(params_idx)("count_of_new"),
                                                                        (new_torrents_dt.Copy.AsEnumerable.First)(Columns.topic_name.ToString))
-                            EnableTrayBlinking("Найдены новые торренты!", tray_message)
+                            EnableTrayBlinking(UiText.T("Найдены новые торренты!"), tray_message)
                         End If
                     End If
 
@@ -524,7 +524,7 @@ Public Class frmMain
                                 End If
                             Catch ex As Exception
                                 If Not IsCurrentScan(generation, cts) Then Return
-                                LogOutput(String.Format("{0} ({1}): {2}", "Ошибка передачи раздачи", tracker_name, GetProperExceptionText(ex)))
+                                LogOutput(String.Format("{0} ({1}): {2}", UiText.T("Ошибка передачи раздачи"), tracker_name, GetProperExceptionText(ex)))
                             End Try
                         Next
                     End If
@@ -549,7 +549,7 @@ Public Class frmMain
             End While
         Catch ex As Exception
             If Not IsCurrentScan(generation, cts) Then Return
-            LogOutput(String.Format("{0}: {1}", "Ошибка проверки", GetProperExceptionText(ex)), True, ex.ToString)
+            LogOutput(String.Format("{0}: {1}", UiText.T("Ошибка проверки"), GetProperExceptionText(ex)), True, ex.ToString)
             ClearWorkingStatus()
         Finally
             If IsCurrentScan(generation, cts) Then
@@ -571,7 +571,7 @@ Public Class frmMain
         For Each forumId As String In clsRuTrackerAtom.ForumIds(rule("forums_rutracker"))
             If Not IsCurrentScan(generation, token) Then Return
             If Not clsRuTrackerAtom.IsForumId(forumId) Then
-                LogOutput("Некорректный ID раздела RuTracker: " & forumId)
+                LogOutput(String.Format(UiText.T("Некорректный ID раздела RuTracker: {0}"), forumId))
                 Continue For
             End If
             If Not feeds.ContainsKey(forumId) Then
@@ -587,7 +587,7 @@ Public Class frmMain
                     End Using
                 Catch ex As Exception
                     If Not IsCurrentScan(generation, token) Then Return
-                    LogOutput("Ошибка Atom-ленты RuTracker (раздел " & forumId & "): " & GetProperExceptionText(ex))
+                    LogOutput(String.Format(UiText.T("Ошибка Atom-ленты RuTracker (раздел {0}): {1}"), forumId, GetProperExceptionText(ex)))
                 End Try
             End If
             If feeds(forumId) Is Nothing Then Continue For
@@ -617,7 +617,7 @@ Public Class frmMain
     End Function
 
     Private Sub OpenMagnet(magnet As String, Optional command As String = Nothing, Optional torrentName As String = "")
-        If clsRuTrackerAtom.MagnetHash(magnet) = "" Then Throw New FormatException("Некорректная magnet-ссылка RuTracker.")
+        If clsRuTrackerAtom.MagnetHash(magnet) = "" Then Throw New FormatException(UiText.T("Некорректная magnet-ссылка RuTracker."))
         StartTorrentClient(clsTorrentClientCommand.CreateClientStartInfo(command, magnet, torrentName, "magnet", ResolveClient))
     End Sub
 
@@ -627,9 +627,9 @@ Public Class frmMain
         If contentType IsNot Nothing AndAlso contentType.MediaType = "application/x-bittorrent" Then
             save(result.ResultB)
         Else
-            Dim received As String = If(contentType Is Nothing, "Content-Type отсутствует", contentType.MediaType)
-            log(String.Format("{0} ({1}): {2}", "Ошибка скачивания торрент-файла", tracker,
-                              "ожидался заголовок application/x-bittorrent, но получен " & received),
+            Dim received As String = If(contentType Is Nothing, UiText.T("Content-Type отсутствует"), contentType.MediaType)
+            log(String.Format("{0} ({1}): {2}", UiText.T("Ошибка скачивания торрент-файла"), tracker,
+                              String.Format(UiText.T("ожидался заголовок application/x-bittorrent, но получен {0}"), received)),
                 Encoding.UTF8.GetString(result.ResultB, 0, result.ResultB.Length))
         End If
     End Sub
@@ -637,7 +637,7 @@ Public Class frmMain
     Private Sub SaveTorrent(torrentBody As Byte(), command As String, tracker_name As String)
         Dim torrentName = GetTorrentName(torrentBody)
         If torrentName = "" Then
-            LogOutput(String.Format("{0} с {1}: {2}", "Ошибка торрент-файла", tracker_name, "неверное имя"))
+            LogOutput(String.Format(UiText.T("Ошибка торрент-файла с {0}: неверное имя"), tracker_name))
             Return
         End If
 
@@ -652,7 +652,7 @@ Public Class frmMain
                     stream.Write(torrentBody, 0, torrentBody.Length)
                 End Using
             Catch ex As Exception
-                LogOutput("Ошибка записи при сохранении торрент-файла (" & tracker_name & "): " & GetProperExceptionText(ex))
+                LogOutput(String.Format(UiText.T("Ошибка записи при сохранении торрент-файла ({0}): {1}"), tracker_name, GetProperExceptionText(ex)))
                 Return
             End Try
             StartTorrentClient(info)
@@ -662,7 +662,7 @@ Public Class frmMain
                 Try
                     File.Delete(torrentPath)
                 Catch cleanup As Exception When TypeOf cleanup Is IOException OrElse TypeOf cleanup Is UnauthorizedAccessException
-                    LogOutput("Не удалось удалить временный торрент-файл: " & GetProperExceptionText(cleanup))
+                    LogOutput(String.Format(UiText.T("Не удалось удалить временный торрент-файл: {0}"), GetProperExceptionText(cleanup)))
                 End Try
             End If
         End Try
@@ -686,7 +686,7 @@ Public Class frmMain
                 dgvKeyWords.Rows.Add(Nothing, KeyWordsParams(KeyWordsParams.Keys.Max)("label"))
             End If
             dgvKeyWords.Rows(KeyWordsNewItemID).Cells("kw_item").Style.Padding = ITEM_PADDING
-            grpKWBox.Text = "Ключевые фразы: " & KeyWordsNewItemID
+            grpKWBox.Text = String.Format(UiText.T("Ключевые фразы: {0}"), KeyWordsNewItemID)
             ReDim Preserve KwListToParamsMapping(KeyWordsNewItemID)
             KwListToParamsMapping(KeyWordsNewItemID) = KeyWordsParams.Keys.Max
 
@@ -702,7 +702,7 @@ Public Class frmMain
 
         If dgvKeyWords.Rows(0).Selected Then dgvKeyWords.Rows(0).Selected = False
 
-        If Not MsgBox("Хотите удалить выбранные ключевые слова из списка?", MsgBoxStyle.Question + MsgBoxStyle.YesNo + vbDefaultButton2) = MsgBoxResult.Yes Then
+        If Not MsgBox(UiText.T("Хотите удалить выбранные ключевые слова из списка?"), MsgBoxStyle.Question + MsgBoxStyle.YesNo + vbDefaultButton2) = MsgBoxResult.Yes Then
             Exit Sub
         End If
 
@@ -728,11 +728,11 @@ Public Class frmMain
         'recalculate
         KeyWordsParams(0)("count_of_new") = "0"
         ShowCountOfNewTorrents(0)
-        grpKWBox.Text = "Ключевые фразы: " & dgvKeyWords.Rows.Count - 1
+        grpKWBox.Text = String.Format(UiText.T("Ключевые фразы: {0}"), dgvKeyWords.Rows.Count - 1)
 
         'check for the auto_cheking option
         If AppOptions("auto_cheking") AndAlso UBound(KwListToParamsMapping) < 1 Then
-            MsgBox("При отсутствии ключевых слов опция автопроверки на старте будет отключена", MsgBoxStyle.Exclamation + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("При отсутствии ключевых слов опция автопроверки на старте будет отключена"), MsgBoxStyle.Exclamation + MsgBoxStyle.OkOnly)
             AppOptions("auto_cheking") = False
         End If
 
@@ -809,7 +809,7 @@ Public Class frmMain
                 dgvTorrents.FirstDisplayedScrollingRowIndex = 0
             End If
         Catch ex As Exception
-            MsgBox("Ошибка списка ключевых слов" & vbCrLf & GetProperExceptionText(ex), vbOKOnly + MsgBoxStyle.Critical)
+            MsgBox(UiText.T("Ошибка списка ключевых слов") & vbCrLf & GetProperExceptionText(ex), vbOKOnly + MsgBoxStyle.Critical)
         End Try
     End Sub
     Private Sub dgvTorrents_ColumnHeaderMouseClick(sender As Object, e As DataGridViewCellMouseEventArgs) Handles dgvTorrents.ColumnHeaderMouseClick
@@ -842,11 +842,18 @@ Public Class frmMain
             If cmsTorrentColumns.Items.Count = 0 Then
                 For Each col As KeyValuePair(Of String, Object) In dgvTorrentsColumns
                     If col.Value("technical") Then Continue For
-                    Dim menu As New ToolStripMenuItem() With {.Text = col.Value("name"), .Name = col.Key, .Checked = col.Value("visibility")}
+                    Dim menu As New ToolStripMenuItem() With {.Text = UiText.T(CStr(col.Value("name"))), .Name = col.Key, .Checked = col.Value("visibility")}
                     cmsTorrentColumns.Items.Add(menu)
                 Next
             End If
             cmsTorrentColumns.Show(Cursor.Position)
+        End If
+    End Sub
+
+    Private Sub dgvTorrents_CellFormatting(sender As Object, e As DataGridViewCellFormattingEventArgs) Handles dgvTorrents.CellFormatting
+        If e.ColumnIndex >= 0 AndAlso dgvTorrents.Columns(e.ColumnIndex).Name = Columns.torrent_status.ToString() AndAlso TypeOf e.Value Is String Then
+            e.Value = UiText.T(DirectCast(e.Value, String))
+            e.FormattingApplied = True
         End If
     End Sub
 
@@ -882,7 +889,7 @@ Public Class frmMain
 
         If (Not e.KeyCode = Keys.Delete) Or selected_rows.Count = 0 Then Exit Sub
 
-        If Not MsgBox("Хотите удалить выбранные торренты из списка?", MsgBoxStyle.Question + MsgBoxStyle.YesNo + vbDefaultButton2) = MsgBoxResult.Yes Then
+        If Not MsgBox(UiText.T("Хотите удалить выбранные торренты из списка?"), MsgBoxStyle.Question + MsgBoxStyle.YesNo + vbDefaultButton2) = MsgBoxResult.Yes Then
             Exit Sub
         End If
 
@@ -945,7 +952,7 @@ Public Class frmMain
             'open browser
             System.Diagnostics.Process.Start(url)
         Catch ex As Exception
-            MsgBox("Не могу открыть браузер" & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Не могу открыть браузер") & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
         End Try
     End Sub
 
@@ -970,16 +977,16 @@ Public Class frmMain
                 End Using
             End If
         Catch ex As Exception
-            LogOutput(String.Format("{0}: {1}", "Ошибка записи лог-файла", GetProperExceptionText(ex)))
+            LogOutput(String.Format("{0}: {1}", UiText.T("Ошибка записи лог-файла"), GetProperExceptionText(ex)))
         End Try
 
         If tbControl.SelectedIndex = 1 Then Exit Sub
         unread_errors_count += 1
-        TabPage_journal.Text = "Журнал ошибок: новых " & CStr(unread_errors_count)
+        TabPage_journal.Text = String.Format(UiText.T("Журнал ошибок: новых {0}"), unread_errors_count)
     End Sub
 
     Private Sub bsrcFoundTorrents_CurrentChanged(sender As Object, e As EventArgs)
-        tbControl.TabPages(0).Text = "Найденные торренты: " & bsrcFoundTorrents.Count
+        tbControl.TabPages(0).Text = String.Format(UiText.T("Найденные торренты: {0}"), bsrcFoundTorrents.Count)
     End Sub
 
     Private Sub ShowCountOfNewTorrents(ByVal kw_id As Integer)
@@ -994,7 +1001,7 @@ Public Class frmMain
             all_unread_rows += CInt(KeyWordsParams(KwListToParamsMapping(i))("count_of_new"))
         Next
 
-        RenameKWItem(0, KeyWordsParams(0)("label"), all_unread_rows)
+        RenameKWItem(0, UiText.T("Все"), all_unread_rows)
         KeyWordsParams(0)("count_of_new") = CStr(all_unread_rows)
 
         If all_unread_rows = 0 Then
@@ -1086,7 +1093,7 @@ Public Class frmMain
             Dim magnet As String = SelectedMagnet()
             If magnet <> "" Then OpenMagnet(magnet)
         Catch ex As Exception
-            MsgBox("Не удалось открыть magnet-ссылку." & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Exclamation)
+            MsgBox(UiText.T("Не удалось открыть magnet-ссылку.") & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Exclamation)
         End Try
     End Sub
 
@@ -1098,7 +1105,7 @@ Public Class frmMain
             url = String.Join(vbCrLf, From row As DataGridViewRow In dgvTorrents.SelectedRows Order By row.Index Select TrackerParams(row.Cells(Columns.tracker_id.ToString).Value)("topic_url") & row.Cells(Columns.topic_id.ToString).Value)
             Clipboard.SetText(url)
         Catch ex As Exception
-            MsgBox("Ошибка буфера обмена" & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Ошибка буфера обмена") & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
         End Try
     End Sub
 
@@ -1267,7 +1274,7 @@ Public Class frmMain
 
         SetDefaultSearchText()
 
-        If Not MsgBox("Хотите удалить все торренты из списка?", MsgBoxStyle.Question + MsgBoxStyle.YesNo + vbDefaultButton2) = MsgBoxResult.Yes Then
+        If Not MsgBox(UiText.T("Хотите удалить все торренты из списка?"), MsgBoxStyle.Question + MsgBoxStyle.YesNo + vbDefaultButton2) = MsgBoxResult.Yes Then
             Exit Sub
         End If
 
@@ -1335,7 +1342,7 @@ Public Class frmMain
         txtSearch.Text = ""
         txtSearch.Font = FONT_ITALIC
         txtSearch.Tag = "default_text_is_set"
-        txtSearch.Text = "Фильтр по названию темы"
+        txtSearch.Text = UiText.T("Фильтр по названию темы")
     End Sub
 
     Private Sub tmrStartChecking_Tick(sender As Object, e As EventArgs) Handles tmrStartChecking.Tick
@@ -1350,7 +1357,7 @@ Public Class frmMain
     Private Sub tbControl_SelectedIndexChanged(sender As Object, e As EventArgs) Handles tbControl.SelectedIndexChanged
         If tbControl.SelectedTab Is TabPage_journal Then
             unread_errors_count = 0
-            TabPage_journal.Text = "Журнал ошибок"
+            TabPage_journal.Text = UiText.T("Журнал ошибок")
             txtSearch.Visible = False
         ElseIf tbControl.SelectedTab Is TabPage_captcha Then
             txtCaptcha.Text = ""
@@ -1378,7 +1385,7 @@ Public Class frmMain
         CaptchaParams("captcha_sid") = logged_result.captcha_sid
         CaptchaParams("captcha_code") = logged_result.captcha_code
 
-        TabPage_captcha.Text = tracker_name & " запрашивает капчу"
+        TabPage_captcha.Text = String.Format(UiText.T("{0} запрашивает капчу"), tracker_name)
         DrawCaptcha(tracker_name)
     End Sub
 
@@ -1403,7 +1410,7 @@ Public Class frmMain
                 End Using
             End If
         Catch ex As Exception
-            LogOutput(String.Format("{0} ({1}): {2}", "Ошибка загрузки капчи", tracker_name, GetProperExceptionText(ex)))
+            LogOutput(String.Format("{0} ({1}): {2}", UiText.T("Ошибка загрузки капчи"), tracker_name, GetProperExceptionText(ex)))
             picCaptcha.Image.Dispose()
         End Try
     End Sub
@@ -1426,7 +1433,7 @@ Public Class frmMain
         Dim tracker_name As String = TrackerParams(tracker_id)("tracker_name")
 
         If txtCaptcha.TextLength = 0 Then
-            MsgBox("Введите капчу!", MsgBoxStyle.Exclamation + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Введите капчу!"), MsgBoxStyle.Exclamation + MsgBoxStyle.OkOnly)
             txtCaptcha.Focus()
             Exit Sub
         End If
@@ -1443,17 +1450,17 @@ Public Class frmMain
                         logged_result = CheckLogged(CapHTTPResult.Result, tracker_id)
                         If logged_result.Status = LoggedResult.LoggedStatuses.no_logged Then
                             TrackerParams(tracker_id)("is_tracker_failure") = True
-                            LogOutput(String.Format("{0} ({1})", "Ошибка авторизации", tracker_name), True, CapHTTPResult.Result)
+                            LogOutput(String.Format("{0} ({1})", UiText.T("Ошибка авторизации"), tracker_name), True, CapHTTPResult.Result)
                             HideCaptchaTab(tracker_id)
                         ElseIf logged_result.Status = LoggedResult.LoggedStatuses.need_captcha Then
                             TrackerParams(tracker_id)("is_tracker_failure") = True
-                            LogOutput(String.Format("{0} ({1}): {2}", "Ошибка авторизации", tracker_name, "нужно ввести капчу"))
+                            LogOutput(String.Format("{0} ({1}): {2}", UiText.T("Ошибка авторизации"), tracker_name, UiText.T("нужно ввести капчу")))
                             CaptchaParams("tracker_id") = tracker_id
                             CaptchaParams("captcha_url") = logged_result.captcha_url
                             CaptchaParams("captcha_sid") = logged_result.captcha_sid
                             CaptchaParams("captcha_code") = logged_result.captcha_code
                             DrawCaptcha(tracker_name)
-                            MsgBox("Неверная капча! Проверьте правильность ввода и убедитесь, что установлены корректные логин и/или пароль", MsgBoxStyle.Exclamation + MsgBoxStyle.OkOnly)
+                            MsgBox(UiText.T("Неверная капча! Проверьте правильность ввода и убедитесь, что установлены корректные логин и/или пароль"), MsgBoxStyle.Exclamation + MsgBoxStyle.OkOnly)
                             txtCaptcha.Focus()
                         Else
                             'authorization successful
@@ -1463,7 +1470,7 @@ Public Class frmMain
                     End If
             End Select
         Catch ex As Exception
-            LogOutput(String.Format("{0} ({1}): {2}", "Ошибка загрузки капчи", tracker_name, GetProperExceptionText(ex)))
+            LogOutput(String.Format("{0} ({1}): {2}", UiText.T("Ошибка загрузки капчи"), tracker_name, GetProperExceptionText(ex)))
         End Try
     End Sub
 
@@ -1547,10 +1554,10 @@ Public Class frmMain
     Private Sub tmrLastCheck_Tick(sender As Object, e As EventArgs) Handles tmrLastCheck.Tick
         If LAST_CHECK_TIME = UNIX_TIME_ORIGIN Then Exit Sub
 
-        tssLabel.Text = "Последняя проверка была " & GetHumanTime((DateTime.UtcNow - LAST_CHECK_TIME).TotalSeconds)
+        tssLabel.Text = String.Format(UiText.T("Последняя проверка была {0}"), GetHumanTime((DateTime.UtcNow - LAST_CHECK_TIME).TotalSeconds))
 
         If APP_PAUSED Then
-            tssLabel.Text &= " [Пауза]"
+            tssLabel.Text &= UiText.T(" [Пауза]")
         End If
     End Sub
 
@@ -1586,12 +1593,12 @@ Public Class frmMain
         APP_HIDDEN = value
 
         If value Then
-            msiHide.Text = "Показать"
-            cmsiHide.Text = "Показать"
+            msiHide.Text = UiText.T("Показать")
+            cmsiHide.Text = UiText.T("Показать")
             Me.Hide()
         Else
-            msiHide.Text = "Скрыть в трей"
-            cmsiHide.Text = "Скрыть в трей"
+            msiHide.Text = UiText.T("Скрыть в трей")
+            cmsiHide.Text = UiText.T("Скрыть в трей")
             Me.Show()
             SetFormSettings()
             Me.Activate()
@@ -1684,7 +1691,7 @@ Public Class frmMain
 
         If cnt_unchecked = cmsTorrentColumns.Items.Count Then
             item.Checked = Not item.Checked
-            MsgBox("Нужно оставить хотя бы один видимый столбец!", MsgBoxStyle.Exclamation + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Нужно оставить хотя бы один видимый столбец!"), MsgBoxStyle.Exclamation + MsgBoxStyle.OkOnly)
             Exit Sub
         End If
 
@@ -1703,7 +1710,7 @@ Public Class frmMain
         Try
             System.Diagnostics.Process.Start(HOME_PAGE_URL)
         Catch ex As Exception
-            MsgBox("Не могу открыть браузер" & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Не могу открыть браузер") & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
         End Try
     End Sub
 
@@ -1744,14 +1751,14 @@ Public Class frmMain
                     Dim tag_name As String = Regex.Match(HTTPUpdateResult.Result, """tag_name"":""(.+?)""", RegexOptions.IgnoreCase, REGEX_TIMEOUT).Groups(1).Value
                     If IsNewerVersion(tag_name, APP_VERSION) Then
                         lblShowNewVersion.Visible = True
-                        lblShowNewVersion.Text = String.Format("{0}: {1}. {2}: {3}", "Доступна новая версия", tag_name, "Текущая версия", APP_VERSION)
+                        lblShowNewVersion.Text = String.Format(UiText.T("Доступна новая версия: {0}. Текущая версия: {1}"), tag_name, APP_VERSION)
                     Else
                         lblShowNewVersion.Visible = False
                     End If
                 End If
             End If
         Catch ex As Exception
-            LogOutput(String.Format("{0}: {1}", "Ошибка проверки обновлений", GetProperExceptionText(ex)))
+            LogOutput(String.Format("{0}: {1}", UiText.T("Ошибка проверки обновлений"), GetProperExceptionText(ex)))
         End Try
     End Sub
 
@@ -1765,7 +1772,7 @@ Public Class frmMain
         Try
             System.Diagnostics.Process.Start(AppRepository("repository_url"))
         Catch ex As Exception
-            MsgBox("Не могу открыть браузер" & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Не могу открыть браузер") & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
         End Try
     End Sub
 
@@ -1773,7 +1780,7 @@ Public Class frmMain
         'show/hide the 'new PM' indicator
 
         Dim tracker_name As String = TrackerParams(tracker_id)("tracker_name")
-        Dim menu_text As String = "Новое персональное сообщение на " & tracker_name
+        Dim menu_text As String = String.Format(UiText.T("Новое персональное сообщение на {0}"), tracker_name)
 
         Select Case tracker_id
             Case Trackers.rutracker
@@ -1798,7 +1805,7 @@ Public Class frmMain
         Try
             System.Diagnostics.Process.Start(TrackerParams(Trackers.rutracker)("pm_url"))
         Catch ex As Exception
-            MsgBox("Не могу открыть браузер" & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Не могу открыть браузер") & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
         End Try
     End Sub
 
@@ -1812,7 +1819,7 @@ Public Class frmMain
         Try
             System.Diagnostics.Process.Start(TrackerParams(Trackers.kinozal)("pm_url"))
         Catch ex As Exception
-            MsgBox("Не могу открыть браузер" & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Не могу открыть браузер") & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
         End Try
     End Sub
 

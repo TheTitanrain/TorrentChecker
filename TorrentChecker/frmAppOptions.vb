@@ -1,5 +1,10 @@
 ﻿Public Class frmAppOptions
 
+
+    Private Sub RestoreLanguage(sender As Object, e As EventArgs) Handles Me.VisibleChanged
+        If Visible Then languageChoice.SelectedIndex = Math.Max(0, Array.IndexOf(UiText.Codes, CStr(AppOptions("language"))))
+    End Sub
+
     Private font_changed As Boolean
 
     Private Sub frmAppOptions_KeyDown(sender As Object, e As KeyEventArgs) Handles Me.KeyDown
@@ -41,6 +46,7 @@
 
     Public Sub New()
         InitializeComponent()
+        languageChoice.Items.AddRange(UiText.Names)
 
         For Each ctrl As Control In Me.Controls
             ctrl.Font = FONT_NORMAL
@@ -49,12 +55,12 @@
         lblClearCache.Font = FONT_UNDERLINE
         lblChangeMainFont.Font = FONT_UNDERLINE
 
-        tlpToolTip.SetToolTip(txtTorrentsStoreTime, "Информация о каждом найденном торренте должна быть сохранена в общем кэше, чтобы программа его ""помнила"" и не выводила в следующий раз." & vbCrLf &
-                              "Данный параметр позволяет настроить максимальный срок, после которого информация будет удалена из кэша, когда данный торрент выйдет из области видимости программы")
-        tlpToolTip.SetToolTip(txtMaxVisibleResults, "Автоочистка окна найденных торрентов для каждого задания. Применяется каждый раз, когда найден хотя бы один торрент в рамках каждого ключевого слова")
-        tlpToolTip.SetToolTip(txtCheckInterval, "Позволяет задать частоту проверок ключевых слов. Изменение вступает в силу при следующей проверке")
-        tlpToolTip.SetToolTip(lblChangeMainFont, "Можно задать шрифт и его размер для найденных торрентов и ключевых фраз. Внимание! Начертание (курсив, полужирность и т.д.) изменить невозможно!")
-        tlpToolTip.SetToolTip(chkPlaySound, "Если отмечено, то программа выдаст стандартный звуковой сигнал, когда торренты будут найдены")
+        tlpToolTip.SetToolTip(txtTorrentsStoreTime, UiText.T("Информация о каждом найденном торренте должна быть сохранена в общем кэше, чтобы программа его ""помнила"" и не выводила в следующий раз.") & vbCrLf &
+                              UiText.T("Данный параметр позволяет настроить максимальный срок, после которого информация будет удалена из кэша, когда данный торрент выйдет из области видимости программы"))
+        tlpToolTip.SetToolTip(txtMaxVisibleResults, UiText.T("Автоочистка окна найденных торрентов для каждого задания. Применяется каждый раз, когда найден хотя бы один торрент в рамках каждого ключевого слова"))
+        tlpToolTip.SetToolTip(txtCheckInterval, UiText.T("Позволяет задать частоту проверок ключевых слов. Изменение вступает в силу при следующей проверке"))
+        tlpToolTip.SetToolTip(lblChangeMainFont, UiText.T("Можно задать шрифт и его размер для найденных торрентов и ключевых фраз. Внимание! Начертание (курсив, полужирность и т.д.) изменить невозможно!"))
+        tlpToolTip.SetToolTip(chkPlaySound, UiText.T("Если отмечено, то программа выдаст стандартный звуковой сигнал, когда торренты будут найдены"))
     End Sub
 
     Private Sub btnCancel_Click(sender As Object, e As EventArgs) Handles btnCancel.Click
@@ -67,6 +73,7 @@
         If font_changed Then
             ChangeMainFont()
         End If
+        AppOptions("language") = UiText.Codes(languageChoice.SelectedIndex)
         AppOptions("hide_to_tray") = chkHideToTray.Checked
         AppOptions("close_to_tray") = chkCloseToTray.Checked
         AppOptions("run_hidden") = chkRunHidden.Checked
@@ -91,7 +98,7 @@
                 End If
             End If
         Catch ex As Exception
-            MsgBox("Ошибка при работе с реестром!" & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Ошибка при работе с реестром!") & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
         Finally
             SaveSettings()
             Me.Hide()
@@ -102,14 +109,14 @@
         Dim x As Integer 'dummy variable for Integer.TryParse
 
         If Not Integer.TryParse(txtCheckInterval.Text, x) Then
-            MsgBox("Неправильный интервал проверки. Он должен состоять только из цифр", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Неправильный интервал проверки. Он должен состоять только из цифр"), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
             txtCheckInterval.SelectAll()
             txtCheckInterval.Focus()
             Return False
         End If
 
         If CInt(txtCheckInterval.Text) < 5 Then
-            MsgBox("Слишком маленький интервал проверки. Он должен быть как минимум 5 минут", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Слишком маленький интервал проверки. Он должен быть как минимум 5 минут"), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
             txtCheckInterval.SelectAll()
             txtCheckInterval.Focus()
             Return False
@@ -131,14 +138,14 @@
         End If
 
         If Not Integer.TryParse(txtMaxVisibleResults.Text, x) Then
-            MsgBox("Неправильное ограничение отображаемых результатов. Оно должно состоять только из цифр", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Неправильное ограничение отображаемых результатов. Оно должно состоять только из цифр"), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
             txtMaxVisibleResults.SelectAll()
             txtMaxVisibleResults.Focus()
             Return False
         End If
 
         If CInt(txtMaxVisibleResults.Text) = 0 Then
-            MsgBox("Некорректное ограничение отображаемых результатов. Оно должно быть как минимум 1 результат", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Некорректное ограничение отображаемых результатов. Оно должно быть как минимум 1 результат"), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
             txtMaxVisibleResults.SelectAll()
             txtMaxVisibleResults.Focus()
             Return False
@@ -150,15 +157,15 @@
     Private Function GetRetentionError() As String
         Dim days As Integer
         If Not Integer.TryParse(txtTorrentsStoreTime.Text, days) Then
-            Return "Неправильный срок хранения. Он должен быть целым числом дней"
+            Return UiText.T("Неправильный срок хранения. Он должен быть целым числом дней")
         End If
-        If days < 1 Then Return "Некорректный срок хранения. Он должен быть как минимум 1 день"
+        If days < 1 Then Return UiText.T("Некорректный срок хранения. Он должен быть как минимум 1 день")
         Return Nothing
     End Function
 
     Private Function GetAutoCheckingError() As String
         If chkAutoChecking.Checked AndAlso UBound(KwListToParamsMapping) < 1 Then
-            Return "Невозможно включить автопроверку при старте, добавьте как минимум одно ключевое слово!"
+            Return UiText.T("Невозможно включить автопроверку при старте, добавьте как минимум одно ключевое слово!")
         End If
         Return Nothing
     End Function
@@ -188,11 +195,11 @@
     End Sub
 
     Private Sub lblClearCache_Click(sender As Object, e As EventArgs) Handles lblClearCache.Click
-        If Not MsgBox("Действительно хотите очистить кэш всех найденных торрентов? Они будут найдены повторно", MsgBoxStyle.Question + MsgBoxStyle.YesNo + vbDefaultButton2) = MsgBoxResult.Yes Then
+        If Not MsgBox(UiText.T("Действительно хотите очистить кэш всех найденных торрентов? Они будут найдены повторно"), MsgBoxStyle.Question + MsgBoxStyle.YesNo + vbDefaultButton2) = MsgBoxResult.Yes Then
             Exit Sub
         End If
         dtStoredTorrents.Clear()
-        MsgBox("Кэш очищен!", MsgBoxStyle.Information + MsgBoxStyle.OkOnly)
+        MsgBox(UiText.T("Кэш очищен!"), MsgBoxStyle.Information + MsgBoxStyle.OkOnly)
     End Sub
 
     Private Sub LblChangeMainFont_Click(sender As Object, e As EventArgs) Handles lblChangeMainFont.Click
@@ -227,7 +234,7 @@
                 End If
             Next
         Catch ex As Exception
-            MsgBox("Не могу изменить шрифт!" & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Не могу изменить шрифт!") & vbCrLf & GetProperExceptionText(ex), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
         End Try
     End Sub
 

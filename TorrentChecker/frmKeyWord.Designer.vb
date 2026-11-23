@@ -69,7 +69,7 @@ Partial Class frmKeyWord
         Me.Label1.Name = "Label1"
         Me.Label1.Size = New System.Drawing.Size(149, 13)
         Me.Label1.TabIndex = 0
-        Me.Label1.Text = "Ключевое слово или фраза:"
+        Me.Label1.Text = UiText.T("Ключевое слово или фраза:")
         '
         'txtKeyWord
         '
@@ -93,7 +93,7 @@ Partial Class frmKeyWord
         Me.grpTrackersBox.Size = New System.Drawing.Size(499, 85)
         Me.grpTrackersBox.TabIndex = 2
         Me.grpTrackersBox.TabStop = False
-        Me.grpTrackersBox.Text = "Трекеры"
+        Me.grpTrackersBox.Text = UiText.T("Трекеры")
         '
         'lblKinozalForumsCount
         '
@@ -102,7 +102,7 @@ Partial Class frmKeyWord
         Me.lblKinozalForumsCount.Name = "lblKinozalForumsCount"
         Me.lblKinozalForumsCount.Size = New System.Drawing.Size(112, 13)
         Me.lblKinozalForumsCount.TabIndex = 5
-        Me.lblKinozalForumsCount.Text = "Выбрано форумов: 0"
+        Me.lblKinozalForumsCount.Text = String.Format(UiText.T("Выбрано форумов: {0}"), 0)
         '
         'lblRutrackerForumsCount
         '
@@ -111,7 +111,7 @@ Partial Class frmKeyWord
         Me.lblRutrackerForumsCount.Name = "lblRutrackerForumsCount"
         Me.lblRutrackerForumsCount.Size = New System.Drawing.Size(112, 13)
         Me.lblRutrackerForumsCount.TabIndex = 4
-        Me.lblRutrackerForumsCount.Text = "Выбрано форумов: 0"
+        Me.lblRutrackerForumsCount.Text = String.Format(UiText.T("Выбрано форумов: {0}"), 0)
         '
         'lblForumsKinozal
         '
@@ -122,7 +122,7 @@ Partial Class frmKeyWord
         Me.lblForumsKinozal.Name = "lblForumsKinozal"
         Me.lblForumsKinozal.Size = New System.Drawing.Size(95, 13)
         Me.lblForumsKinozal.TabIndex = 9
-        Me.lblForumsKinozal.Text = "Выбрать форумы"
+        Me.lblForumsKinozal.Text = UiText.T("Выбрать форумы")
         '
         'lblForumsRutracker
         '
@@ -133,7 +133,7 @@ Partial Class frmKeyWord
         Me.lblForumsRutracker.Name = "lblForumsRutracker"
         Me.lblForumsRutracker.Size = New System.Drawing.Size(95, 13)
         Me.lblForumsRutracker.TabIndex = 7
-        Me.lblForumsRutracker.Text = "Выбрать форумы"
+        Me.lblForumsRutracker.Text = UiText.T("Выбрать форумы")
         '
         'chkKinozal
         '
@@ -161,7 +161,7 @@ Partial Class frmKeyWord
         Me.btnSave.Name = "btnSave"
         Me.btnSave.Size = New System.Drawing.Size(98, 26)
         Me.btnSave.TabIndex = 14
-        Me.btnSave.Text = "Сохранить"
+        Me.btnSave.Text = UiText.T("Сохранить")
         Me.btnSave.UseVisualStyleBackColor = True
         '
         'btnCancel
@@ -170,7 +170,7 @@ Partial Class frmKeyWord
         Me.btnCancel.Name = "btnCancel"
         Me.btnCancel.Size = New System.Drawing.Size(98, 26)
         Me.btnCancel.TabIndex = 15
-        Me.btnCancel.Text = "Отмена"
+        Me.btnCancel.Text = UiText.T("Отмена")
         Me.btnCancel.UseVisualStyleBackColor = True
         '
         'grpFiltersBox
@@ -194,7 +194,7 @@ Partial Class frmKeyWord
         Me.grpFiltersBox.Size = New System.Drawing.Size(499, 162)
         Me.grpFiltersBox.TabIndex = 5
         Me.grpFiltersBox.TabStop = False
-        Me.grpFiltersBox.Text = "Фильтр"
+        Me.grpFiltersBox.Text = UiText.T("Фильтр")
         '
         'Label6
         '
@@ -203,7 +203,7 @@ Partial Class frmKeyWord
         Me.Label6.Name = "Label6"
         Me.Label6.Size = New System.Drawing.Size(20, 13)
         Me.Label6.TabIndex = 12
-        Me.Label6.Text = "ГБ"
+        Me.Label6.Text = UiText.T("ГБ")
         '
         'txtTorrentMaxSize
         '
@@ -222,7 +222,7 @@ Partial Class frmKeyWord
         Me.Label5.Name = "Label5"
         Me.Label5.Size = New System.Drawing.Size(103, 13)
         Me.Label5.TabIndex = 10
-        Me.Label5.Text = "ГБ и/или не более:"
+        Me.Label5.Text = UiText.T("ГБ и/или не более:")
         '
         'txtTorrentMinSize
         '
@@ -241,7 +241,7 @@ Partial Class frmKeyWord
         Me.Label4.Name = "Label4"
         Me.Label4.Size = New System.Drawing.Size(148, 13)
         Me.Label4.TabIndex = 8
-        Me.Label4.Text = "Размер торрента не менее:"
+        Me.Label4.Text = UiText.T("Размер торрента не менее:")
         '
         'txtTopicID
         '
@@ -260,7 +260,7 @@ Partial Class frmKeyWord
         Me.Label3.Name = "Label3"
         Me.Label3.Size = New System.Drawing.Size(120, 13)
         Me.Label3.TabIndex = 6
-        Me.Label3.Text = "Идентификатор темы:"
+        Me.Label3.Text = UiText.T("Идентификатор темы:")
         '
         'txtAdditionalFilter
         '
@@ -278,7 +278,7 @@ Partial Class frmKeyWord
         Me.chkAdditionalFilter.Name = "chkAdditionalFilter"
         Me.chkAdditionalFilter.Size = New System.Drawing.Size(157, 17)
         Me.chkAdditionalFilter.TabIndex = 4
-        Me.chkAdditionalFilter.Text = "Дополнительный фильтр:"
+        Me.chkAdditionalFilter.Text = UiText.T("Дополнительный фильтр:")
         Me.chkAdditionalFilter.UseVisualStyleBackColor = True
         '
         'txtKeyWordLabel
@@ -296,7 +296,7 @@ Partial Class frmKeyWord
         Me.Label2.Name = "Label2"
         Me.Label2.Size = New System.Drawing.Size(133, 13)
         Me.Label2.TabIndex = 2
-        Me.Label2.Text = "Метка для отображения:"
+        Me.Label2.Text = UiText.T("Метка для отображения:")
         '
         'grpNotificationBox
         '
@@ -310,7 +310,7 @@ Partial Class frmKeyWord
         Me.grpNotificationBox.Size = New System.Drawing.Size(499, 172)
         Me.grpNotificationBox.TabIndex = 6
         Me.grpNotificationBox.TabStop = False
-        Me.grpNotificationBox.Text = "Поведение"
+        Me.grpNotificationBox.Text = UiText.T("Поведение")
         '
         'lnkResetToUT
         '
@@ -318,7 +318,7 @@ Partial Class frmKeyWord
         Me.lnkResetToUT.Name = "lnkResetToUT"
         Me.lnkResetToUT.Size = New System.Drawing.Size(175, 26)
         Me.lnkResetToUT.TabIndex = 14
-        Me.lnkResetToUT.Text = "Сброс (µTorrent Classic)"
+        Me.lnkResetToUT.Text = UiText.T("Сброс (µTorrent Classic)")
         Me.lnkResetToUT.AutoSize = True
         '
         'lnkResetToQB
@@ -327,7 +327,7 @@ Partial Class frmKeyWord
         Me.lnkResetToQB.Name = "lnkResetToQB"
         Me.lnkResetToQB.Size = New System.Drawing.Size(175, 26)
         Me.lnkResetToQB.TabIndex = 15
-        Me.lnkResetToQB.Text = "Сброс (qBittorrent)"
+        Me.lnkResetToQB.Text = UiText.T("Сброс (qBittorrent)")
         Me.lnkResetToQB.AutoSize = True
         '
         'lblTCCommandLineHelp
@@ -337,7 +337,7 @@ Partial Class frmKeyWord
         Me.lblTCCommandLineHelp.Name = "lblTCCommandLineHelp"
         Me.lblTCCommandLineHelp.Size = New System.Drawing.Size(232, 13)
         Me.lblTCCommandLineHelp.TabIndex = 2
-        Me.lblTCCommandLineHelp.Text = "%ClientPath% — путь к программе по умолчанию"
+        Me.lblTCCommandLineHelp.Text = UiText.T("%ClientPath% — путь к программе по умолчанию")
         '
         'txtTCCommandLine
         '
@@ -354,7 +354,7 @@ Partial Class frmKeyWord
         Me.chkSendToClient.Name = "chkSendToClient"
         Me.chkSendToClient.Size = New System.Drawing.Size(404, 17)
         Me.chkSendToClient.TabIndex = 12
-        Me.chkSendToClient.Text = "Автоматически скачать найденный торрент и переслать в торрент-клиент"
+        Me.chkSendToClient.Text = UiText.T("Автоматически скачать найденный торрент и переслать в торрент-клиент")
         Me.chkSendToClient.UseVisualStyleBackColor = True
         '
         'grpKWOptionsBox
@@ -366,7 +366,7 @@ Partial Class frmKeyWord
         Me.grpKWOptionsBox.Size = New System.Drawing.Size(499, 79)
         Me.grpKWOptionsBox.TabIndex = 7
         Me.grpKWOptionsBox.TabStop = False
-        Me.grpKWOptionsBox.Text = "Свойства"
+        Me.grpKWOptionsBox.Text = UiText.T("Свойства")
         '
         'chkPause
         '
@@ -375,7 +375,7 @@ Partial Class frmKeyWord
         Me.chkPause.Name = "chkPause"
         Me.chkPause.Size = New System.Drawing.Size(57, 17)
         Me.chkPause.TabIndex = 11
-        Me.chkPause.Text = "Пауза"
+        Me.chkPause.Text = UiText.T("Пауза")
         Me.chkPause.UseVisualStyleBackColor = True
         '
         'chkUniqueness
@@ -385,7 +385,7 @@ Partial Class frmKeyWord
         Me.chkUniqueness.Name = "chkUniqueness"
         Me.chkUniqueness.Size = New System.Drawing.Size(99, 17)
         Me.chkUniqueness.TabIndex = 10
-        Me.chkUniqueness.Text = "Уникальность"
+        Me.chkUniqueness.Text = UiText.T("Уникальность")
         Me.chkUniqueness.UseVisualStyleBackColor = True
         '
         'frmKeyWord
@@ -405,7 +405,7 @@ Partial Class frmKeyWord
         Me.MinimizeBox = False
         Me.Name = "frmKeyWord"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent
-        Me.Text = "Добавление ключевого слова"
+        Me.Text = UiText.T("Добавление ключевого слова")
         Me.grpTrackersBox.ResumeLayout(False)
         Me.grpTrackersBox.PerformLayout()
         Me.grpFiltersBox.ResumeLayout(False)

@@ -25,7 +25,7 @@ Friend Module clsTorrentClientCommand
 
     Friend Function SplitCommand(command As String) As String()
         If String.IsNullOrWhiteSpace(command) OrElse command.Contains(ChrW(0)) Then
-            Throw New FormatException("Некорректная командная строка торрент-клиента.")
+            Throw New FormatException(UiText.T("Некорректная командная строка торрент-клиента."))
         End If
 
         Dim count As Integer
@@ -67,15 +67,14 @@ Friend Module clsTorrentClientCommand
             Function()
                 If clientPath Is Nothing Then clientPath = resolve(association)
                 If String.IsNullOrWhiteSpace(clientPath) Then
-                    Throw New InvalidOperationException("Не удалось определить программу для " & association &
-                                                        ". Укажите путь к торрент-клиенту явно.")
+                    Throw New InvalidOperationException(String.Format(UiText.T("Не удалось определить программу для {0}. Укажите путь к торрент-клиенту явно."), association))
                 End If
                 Return clientPath
             End Function
         If String.Equals(executable, ClientToken, StringComparison.OrdinalIgnoreCase) Then
             executable = getClientPath()
         ElseIf String.IsNullOrWhiteSpace(executable) OrElse Tokens.IsMatch(executable) Then
-            Throw New FormatException("Укажите программу торрент-клиента или %ClientPath% в начале команды.")
+            Throw New FormatException(UiText.T("Укажите программу торрент-клиента или %ClientPath% в начале команды."))
         End If
 
         Dim expanded = arguments.Skip(1).Select(Function(argument) QuoteArgument(Tokens.Replace(argument,

@@ -95,7 +95,7 @@ Friend Module clsSettingsJson
             End If
         Next
         If CInt(window("width")) <= 0 OrElse CInt(window("height")) <= 0 OrElse CInt(window("splitter_distance")) < 0 Then
-            Throw New InvalidDataException("Неверные размеры окна.")
+            Throw New InvalidDataException(UiText.T("Неверные размеры окна."))
         End If
         Dim columns As New Dictionary(Of String, Object)
         Dim layouts = Section(wire, "columns")
@@ -105,10 +105,10 @@ Friend Module clsSettingsJson
             Dim column = Fields(Section(layouts, col.Key), defaults)
             Dim index = CInt(WholeNumber(column("index")))
             If index < 0 OrElse index >= dgvTorrentsColumns.Count OrElse Not indexes.Add(index) Then
-                Throw New InvalidDataException("Неверный порядок столбцов.")
+                Throw New InvalidDataException(UiText.T("Неверный порядок столбцов."))
             End If
             Dim width = CInt(WholeNumber(column("width")))
-            If width < 0 OrElse width > 65536 Then Throw New InvalidDataException("Неверная ширина столбца.")
+            If width < 0 OrElse width > 65536 Then Throw New InvalidDataException(UiText.T("Неверная ширина столбца."))
             column("index") = index
             column("width") = width
             column("visibility") = DirectCast(column("visibility"), Boolean)
@@ -118,11 +118,15 @@ Friend Module clsSettingsJson
             columns.Add(col.Key, column)
         Next
         Dim sorting = Fields(Section(wire, "sorting"), dgvTorrentsSorting)
-        If Not columns.ContainsKey(DirectCast(sorting("column_name"), String)) Then Throw New InvalidDataException("Неизвестный столбец сортировки.")
+        If Not columns.ContainsKey(DirectCast(sorting("column_name"), String)) Then Throw New InvalidDataException(UiText.T("Неизвестный столбец сортировки."))
         sorting("sort_order") = EnumSetting(Of SortOrder)(sorting("sort_order"))
 
         Dim options = Fields(Section(wire, "options"), AppOptions)
         For Each key In AppOptions.Keys
+            If key = "language" Then
+                options(key) = UiText.Normalize(options(key))
+                Continue For
+            End If
             If key <> "dgv_font_bold" AndAlso key <> "dgv_font_normal" Then
                 options(key) = DirectCast(options(key), Boolean)
                 Continue For
@@ -145,13 +149,13 @@ Friend Module clsSettingsJson
                        Cast(Of Object)().Select(Function(id) CInt(WholeNumber(id))).ToArray(), New Integer() {0})
         If order.Length = 0 OrElse order(0) <> 0 OrElse order.Distinct().Count() <> order.Length OrElse
            rules.Count <> order.Length OrElse order.Any(Function(id) id < 0 OrElse Not rules.ContainsKey(id)) Then
-            Throw New InvalidDataException("Неверный порядок ключевых фраз.")
+            Throw New InvalidDataException(UiText.T("Неверный порядок ключевых фраз."))
         End If
         For Each id In order
             Dim rule = rules(id)
             If id <> 0 Then Boolean.Parse(rule("paused"))
             Integer.Parse(rule("count_of_new"), CultureInfo.InvariantCulture)
-            If rule("label") Is Nothing Then Throw New InvalidDataException("Неверная ключевая фраза.")
+            If rule("label") Is Nothing Then Throw New InvalidDataException(UiText.T("Неверная ключевая фраза."))
         Next
         Dim proxy = Fields(Section(wire, "proxy"), ProxySettings)
         proxy("use_proxy") = DirectCast(proxy("use_proxy"), Boolean)
@@ -161,7 +165,7 @@ Friend Module clsSettingsJson
         Dim retention = If(wire.ContainsKey("historyRetention"), WholeNumber(wire("historyRetention")), DEFAULT_TORRENTS_MAX_STORETIME)
         If retention <= 0 Then retention = DEFAULT_TORRENTS_MAX_STORETIME
         Dim maxResults = If(wire.ContainsKey("maxResults"), CShort(WholeNumber(wire("maxResults"))), TORRENTS_MAX_RESULTS)
-        If interval <= 0 Then Throw New InvalidDataException("Неверный интервал проверки.")
+        If interval <= 0 Then Throw New InvalidDataException(UiText.T("Неверный интервал проверки."))
         Return New Dictionary(Of String, Object) From {
             {"frmMain", window}, {"proxy", proxy},
             {"dgvTorrentsColumns", columns}, {"dgvTorrentsSorting", sorting}, {"AppOptions", options},
@@ -172,13 +176,13 @@ Friend Module clsSettingsJson
 
     Private Function WholeNumber(value As Object) As Long
         If TypeOf value Is Integer OrElse TypeOf value Is Long OrElse TypeOf value Is Short Then Return CLng(value)
-        Throw New InvalidDataException("Ожидается целое число.")
+        Throw New InvalidDataException(UiText.T("Ожидается целое число."))
     End Function
 
     Private Function EnumSetting(Of T As Structure)(value As Object) As T
         If TypeOf value Is T Then Return DirectCast(value, T)
         Dim numericValue = CInt(WholeNumber(value))
-        If Not [Enum].IsDefined(GetType(T), numericValue) Then Throw New InvalidDataException("Неизвестное значение параметра.")
+        If Not [Enum].IsDefined(GetType(T), numericValue) Then Throw New InvalidDataException(UiText.T("Неизвестное значение параметра."))
         Return DirectCast([Enum].ToObject(GetType(T), numericValue), T)
     End Function
 
@@ -214,7 +218,7 @@ Friend Module clsSettingsJson
     Friend Function EncodeHistory(table As DataTable) As Object
         Dim schema As New Dictionary(Of String, String)
         For Each col As DataColumn In table.Columns
-            If Not HistoryTypes.Contains(col.DataType) Then Throw New InvalidDataException("Неизвестный тип столбца истории.")
+            If Not HistoryTypes.Contains(col.DataType) Then Throw New InvalidDataException(UiText.T("Неизвестный тип столбца истории."))
             schema.Add(col.ColumnName, col.DataType.Name)
         Next
         Dim rows As New List(Of Object())
@@ -228,20 +232,20 @@ Friend Module clsSettingsJson
     Friend Function DecodeHistory(wire As Dictionary(Of String, Object), found As Boolean) As DataTable
         Dim table = CreateHistoryTable(found)
         Dim names = DirectCast(wire("columns"), IList).Cast(Of String)().ToArray()
-        If names.Distinct(StringComparer.Ordinal).Count() <> names.Length Then Throw New InvalidDataException("Повторяющийся столбец истории.")
+        If names.Distinct(StringComparer.Ordinal).Count() <> names.Length Then Throw New InvalidDataException(UiText.T("Повторяющийся столбец истории."))
         Dim schema = Section(wire, "types")
         For Each name In names
             Dim columnType = HistoryTypes.SingleOrDefault(Function(t) t.Name = CStr(schema(name)))
-            If columnType Is Nothing Then Throw New InvalidDataException("Неизвестный тип столбца истории.")
+            If columnType Is Nothing Then Throw New InvalidDataException(UiText.T("Неизвестный тип столбца истории."))
             If Not table.Columns.Contains(name) Then
                 table.Columns.Add(name, columnType)
             ElseIf table.Columns(name).DataType IsNot columnType AndAlso
                    Not (table.Columns(name).DataType Is GetType(Trackers) AndAlso columnType Is GetType(Integer)) Then
-                Throw New InvalidDataException("Неверный тип столбца истории.")
+                Throw New InvalidDataException(UiText.T("Неверный тип столбца истории."))
             End If
         Next
         For Each raw As IList In DirectCast(wire("rows"), IList)
-            If raw.Count <> names.Length Then Throw New InvalidDataException("Неверная строка истории.")
+            If raw.Count <> names.Length Then Throw New InvalidDataException(UiText.T("Неверная строка истории."))
             Dim row = table.NewRow()
             For index = 0 To names.Length - 1
                 If raw(index) Is Nothing Then Continue For

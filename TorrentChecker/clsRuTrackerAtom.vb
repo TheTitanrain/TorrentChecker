@@ -41,7 +41,7 @@ Friend NotInheritable Class clsRuTrackerAtom
     Friend Shared Function Read(xml As String) As List(Of clsRuTrackerAtom)
         Dim feed As XElement = XDocument.Parse(xml).Root
         If feed Is Nothing OrElse feed.Name <> Atom + "feed" Then
-            Throw New FormatException("Сервер вернул ответ без Atom-ленты RuTracker.")
+            Throw New FormatException(UiText.T("Сервер вернул ответ без Atom-ленты RuTracker."))
         End If
 
         Dim defaultForumName As String = If(CStr(feed.Element(Atom + "title")), "")

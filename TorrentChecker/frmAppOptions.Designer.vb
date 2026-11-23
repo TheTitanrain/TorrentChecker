@@ -23,6 +23,8 @@ Partial Class frmAppOptions
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
         Me.components = New System.ComponentModel.Container()
+        Me.languageChoice = New System.Windows.Forms.ComboBox()
+        Me.languageLabel = New System.Windows.Forms.Label()
         Me.chkHideToTray = New System.Windows.Forms.CheckBox()
         Me.chkCloseToTray = New System.Windows.Forms.CheckBox()
         Me.chkRunWithWindows = New System.Windows.Forms.CheckBox()
@@ -63,7 +65,7 @@ Partial Class frmAppOptions
         Me.chkHideToTray.Name = "chkHideToTray"
         Me.chkHideToTray.Size = New System.Drawing.Size(126, 17)
         Me.chkHideToTray.TabIndex = 1
-        Me.chkHideToTray.Text = "Сворачивать в трей"
+        Me.chkHideToTray.Text = UiText.T("Сворачивать в трей")
         Me.chkHideToTray.UseVisualStyleBackColor = True
         '
         'chkCloseToTray
@@ -73,7 +75,7 @@ Partial Class frmAppOptions
         Me.chkCloseToTray.Name = "chkCloseToTray"
         Me.chkCloseToTray.Size = New System.Drawing.Size(117, 17)
         Me.chkCloseToTray.TabIndex = 2
-        Me.chkCloseToTray.Text = "Закрывать в трей"
+        Me.chkCloseToTray.Text = UiText.T("Закрывать в трей")
         Me.chkCloseToTray.UseVisualStyleBackColor = True
         '
         'chkRunWithWindows
@@ -83,7 +85,7 @@ Partial Class frmAppOptions
         Me.chkRunWithWindows.Name = "chkRunWithWindows"
         Me.chkRunWithWindows.Size = New System.Drawing.Size(175, 17)
         Me.chkRunWithWindows.TabIndex = 3
-        Me.chkRunWithWindows.Text = "Запускать вместе с Windows"
+        Me.chkRunWithWindows.Text = UiText.T("Запускать вместе с Windows")
         Me.chkRunWithWindows.UseVisualStyleBackColor = True
         '
         'Label1
@@ -93,7 +95,7 @@ Partial Class frmAppOptions
         Me.Label1.Name = "Label1"
         Me.Label1.Size = New System.Drawing.Size(110, 13)
         Me.Label1.TabIndex = 4
-        Me.Label1.Text = "Интервал проверки:"
+        Me.Label1.Text = UiText.T("Интервал проверки:")
         '
         'txtCheckInterval
         '
@@ -112,7 +114,7 @@ Partial Class frmAppOptions
         Me.Label2.Name = "Label2"
         Me.Label2.Size = New System.Drawing.Size(37, 13)
         Me.Label2.TabIndex = 6
-        Me.Label2.Text = "минут"
+        Me.Label2.Text = UiText.T("минут")
         '
         'chkRunHidden
         '
@@ -121,25 +123,25 @@ Partial Class frmAppOptions
         Me.chkRunHidden.Name = "chkRunHidden"
         Me.chkRunHidden.Size = New System.Drawing.Size(138, 17)
         Me.chkRunHidden.TabIndex = 4
-        Me.chkRunHidden.Text = "Запускать свернутым"
+        Me.chkRunHidden.Text = UiText.T("Запускать свернутым")
         Me.chkRunHidden.UseVisualStyleBackColor = True
         '
         'btnSave
         '
-        Me.btnSave.Location = New System.Drawing.Point(245, 460)
+        Me.btnSave.Location = New System.Drawing.Point(245, 495)
         Me.btnSave.Name = "btnSave"
         Me.btnSave.Size = New System.Drawing.Size(98, 26)
         Me.btnSave.TabIndex = 13
-        Me.btnSave.Text = "Сохранить"
+        Me.btnSave.Text = UiText.T("Сохранить")
         Me.btnSave.UseVisualStyleBackColor = True
         '
         'btnCancel
         '
-        Me.btnCancel.Location = New System.Drawing.Point(349, 460)
+        Me.btnCancel.Location = New System.Drawing.Point(349, 495)
         Me.btnCancel.Name = "btnCancel"
         Me.btnCancel.Size = New System.Drawing.Size(98, 26)
         Me.btnCancel.TabIndex = 14
-        Me.btnCancel.Text = "Отмена"
+        Me.btnCancel.Text = UiText.T("Отмена")
         Me.btnCancel.UseVisualStyleBackColor = True
         '
         'Label3
@@ -149,7 +151,7 @@ Partial Class frmAppOptions
         Me.Label3.Name = "Label3"
         Me.Label3.Size = New System.Drawing.Size(198, 13)
         Me.Label3.TabIndex = 10
-        Me.Label3.Text = "Срок хранения найденных торрентов:"
+        Me.Label3.Text = UiText.T("Срок хранения найденных торрентов:")
         '
         'txtTorrentsStoreTime
         '
@@ -168,7 +170,7 @@ Partial Class frmAppOptions
         Me.Label4.Name = "Label4"
         Me.Label4.Size = New System.Drawing.Size(31, 13)
         Me.Label4.TabIndex = 12
-        Me.Label4.Text = "дней"
+        Me.Label4.Text = UiText.T("дней")
         '
         'grpTrayBox
         '
@@ -179,7 +181,7 @@ Partial Class frmAppOptions
         Me.grpTrayBox.Size = New System.Drawing.Size(435, 82)
         Me.grpTrayBox.TabIndex = 13
         Me.grpTrayBox.TabStop = False
-        Me.grpTrayBox.Text = "Трей"
+        Me.grpTrayBox.Text = UiText.T("Трей")
         '
         'grpRunBox
         '
@@ -191,7 +193,7 @@ Partial Class frmAppOptions
         Me.grpRunBox.Size = New System.Drawing.Size(435, 105)
         Me.grpRunBox.TabIndex = 14
         Me.grpRunBox.TabStop = False
-        Me.grpRunBox.Text = "Запуск"
+        Me.grpRunBox.Text = UiText.T("Запуск")
         '
         'chkAutoChecking
         '
@@ -200,7 +202,7 @@ Partial Class frmAppOptions
         Me.chkAutoChecking.Name = "chkAutoChecking"
         Me.chkAutoChecking.Size = New System.Drawing.Size(155, 17)
         Me.chkAutoChecking.TabIndex = 5
-        Me.chkAutoChecking.Text = "Сразу начинать проверку"
+        Me.chkAutoChecking.Text = UiText.T("Сразу начинать проверку")
         Me.chkAutoChecking.UseVisualStyleBackColor = True
         '
         'gprOtherBox
@@ -226,7 +228,7 @@ Partial Class frmAppOptions
         Me.gprOtherBox.Size = New System.Drawing.Size(435, 243)
         Me.gprOtherBox.TabIndex = 15
         Me.gprOtherBox.TabStop = False
-        Me.gprOtherBox.Text = "Разное"
+        Me.gprOtherBox.Text = UiText.T("Разное")
         '
         'chkPlaySound
         '
@@ -235,7 +237,7 @@ Partial Class frmAppOptions
         Me.chkPlaySound.Name = "chkPlaySound"
         Me.chkPlaySound.Size = New System.Drawing.Size(126, 17)
         Me.chkPlaySound.TabIndex = 20
-        Me.chkPlaySound.Text = "Проигрывать звуки"
+        Me.chkPlaySound.Text = UiText.T("Проигрывать звуки")
         Me.chkPlaySound.UseVisualStyleBackColor = True
         '
         'lblChangeMainFont
@@ -247,7 +249,7 @@ Partial Class frmAppOptions
         Me.lblChangeMainFont.Name = "lblChangeMainFont"
         Me.lblChangeMainFont.Size = New System.Drawing.Size(170, 13)
         Me.lblChangeMainFont.TabIndex = 19
-        Me.lblChangeMainFont.Text = "Изменить шрифт главного окна"
+        Me.lblChangeMainFont.Text = UiText.T("Изменить шрифт главного окна")
         '
         'chkCheckUpdates
         '
@@ -256,7 +258,7 @@ Partial Class frmAppOptions
         Me.chkCheckUpdates.Name = "chkCheckUpdates"
         Me.chkCheckUpdates.Size = New System.Drawing.Size(144, 17)
         Me.chkCheckUpdates.TabIndex = 8
-        Me.chkCheckUpdates.Text = "Проверять обновления"
+        Me.chkCheckUpdates.Text = UiText.T("Проверять обновления")
         Me.chkCheckUpdates.UseVisualStyleBackColor = True
         '
         'chkConfirmExit
@@ -266,7 +268,7 @@ Partial Class frmAppOptions
         Me.chkConfirmExit.Name = "chkConfirmExit"
         Me.chkConfirmExit.Size = New System.Drawing.Size(237, 17)
         Me.chkConfirmExit.TabIndex = 9
-        Me.chkConfirmExit.Text = "Запрашивать подтверждение при выходе"
+        Me.chkConfirmExit.Text = UiText.T("Запрашивать подтверждение при выходе")
         Me.chkConfirmExit.UseVisualStyleBackColor = True
         '
         'lblClearCache
@@ -278,7 +280,7 @@ Partial Class frmAppOptions
         Me.lblClearCache.Name = "lblClearCache"
         Me.lblClearCache.Size = New System.Drawing.Size(77, 13)
         Me.lblClearCache.TabIndex = 18
-        Me.lblClearCache.Text = "Очистить кэш"
+        Me.lblClearCache.Text = UiText.T("Очистить кэш")
         '
         'Label6
         '
@@ -287,7 +289,7 @@ Partial Class frmAppOptions
         Me.Label6.Name = "Label6"
         Me.Label6.Size = New System.Drawing.Size(70, 13)
         Me.Label6.TabIndex = 17
-        Me.Label6.Text = "результатов"
+        Me.Label6.Text = UiText.T("результатов")
         '
         'txtMaxVisibleResults
         '
@@ -306,7 +308,7 @@ Partial Class frmAppOptions
         Me.Label5.Name = "Label5"
         Me.Label5.Size = New System.Drawing.Size(126, 13)
         Me.Label5.TabIndex = 15
-        Me.Label5.Text = "Отображать последние"
+        Me.Label5.Text = UiText.T("Отображать последние")
         '
         'chkWriteFatalErrors
         '
@@ -315,7 +317,7 @@ Partial Class frmAppOptions
         Me.chkWriteFatalErrors.Name = "chkWriteFatalErrors"
         Me.chkWriteFatalErrors.Size = New System.Drawing.Size(202, 17)
         Me.chkWriteFatalErrors.TabIndex = 7
-        Me.chkWriteFatalErrors.Text = "Писать в файл фатальные ошибки"
+        Me.chkWriteFatalErrors.Text = UiText.T("Писать в файл фатальные ошибки")
         Me.chkWriteFatalErrors.UseVisualStyleBackColor = True
         '
         'chkShowJournalTab
@@ -325,14 +327,24 @@ Partial Class frmAppOptions
         Me.chkShowJournalTab.Name = "chkShowJournalTab"
         Me.chkShowJournalTab.Size = New System.Drawing.Size(170, 17)
         Me.chkShowJournalTab.TabIndex = 6
-        Me.chkShowJournalTab.Text = "Показывать журнал ошибок"
+        Me.chkShowJournalTab.Text = UiText.T("Показывать журнал ошибок")
         Me.chkShowJournalTab.UseVisualStyleBackColor = True
         '
         'frmAppOptions
         '
+        Me.languageChoice.DropDownStyle = ComboBoxStyle.DropDownList
+        Me.languageChoice.Name = "languageChoice"
+        Me.languageChoice.Location = New Point(245, 460)
+        Me.languageChoice.Width = 200
+        Me.languageChoice.TabIndex = 12
+        Me.languageLabel.AutoSize = True
+        Me.languageLabel.Location = New Point(12, 464)
+        Me.languageLabel.Text = UiText.T("Язык (после перезапуска)")
+        Me.Controls.Add(Me.languageChoice)
+        Me.Controls.Add(Me.languageLabel)
         Me.AutoScaleDimensions = New System.Drawing.SizeF(96.0!, 96.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi
-        Me.ClientSize = New System.Drawing.Size(458, 493)
+        Me.ClientSize = New System.Drawing.Size(458, 528)
         Me.Controls.Add(Me.gprOtherBox)
         Me.Controls.Add(Me.grpRunBox)
         Me.Controls.Add(Me.grpTrayBox)
@@ -344,7 +356,7 @@ Partial Class frmAppOptions
         Me.MinimizeBox = False
         Me.Name = "frmAppOptions"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent
-        Me.Text = "Настройки"
+        Me.Text = UiText.T("Настройки")
         Me.grpTrayBox.ResumeLayout(False)
         Me.grpTrayBox.PerformLayout()
         Me.grpRunBox.ResumeLayout(False)
@@ -354,6 +366,8 @@ Partial Class frmAppOptions
         Me.ResumeLayout(False)
 
     End Sub
+    Friend languageChoice As ComboBox
+    Private languageLabel As Label
     Friend WithEvents chkHideToTray As System.Windows.Forms.CheckBox
     Friend WithEvents chkCloseToTray As System.Windows.Forms.CheckBox
     Friend WithEvents chkRunWithWindows As System.Windows.Forms.CheckBox

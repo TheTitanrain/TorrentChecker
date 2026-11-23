@@ -85,8 +85,8 @@
             End If
 
             Me.Show()
-            grpForumsBox.Text = "Выбранные форумы: " & lsvForums.SelectedItems.Count
-            grpFormatsBox.Text = "Выбранные форматы: " & lsvFormats.SelectedItems.Count
+            grpForumsBox.Text = String.Format(UiText.T("Выбранные форумы: {0}"), lsvForums.SelectedItems.Count)
+            grpFormatsBox.Text = String.Format(UiText.T("Выбранные форматы: {0}"), lsvFormats.SelectedItems.Count)
             If cnt_forums > 0 Then lsvForums.EnsureVisible(lsvForums.SelectedIndices(0))
             If cnt_formats > 0 Then lsvFormats.EnsureVisible(lsvFormats.SelectedIndices(0))
 
@@ -111,13 +111,13 @@
         If (e.Item.SubItems(3).Text <> "") Then
             e.Item.Selected = False
         End If
-        grpForumsBox.Text = "Выбранные форумы: " & lsvForums.SelectedItems.Count
+        grpForumsBox.Text = String.Format(UiText.T("Выбранные форумы: {0}"), lsvForums.SelectedItems.Count)
     End Sub
 
     Private Sub btnAccept_Click(sender As Object, e As EventArgs) Handles btnAccept.Click
         If lsvForums.SelectedItems.Count > 200 Then
             'rutracker's limit
-            MsgBox("Вы можете выбрать максимум 200 разделов!", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Вы можете выбрать максимум 200 разделов!"), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
             Exit Sub
         End If
 
@@ -126,7 +126,7 @@
         'save forums
         If lsvForums.SelectedItems.Count = 0 OrElse lsvForums.Items(0).Selected Then 'nothing selected, empty list or first item selected
             ForumsSelected(TrackerSelectedID) = If(TrackerSelectedID = Trackers.rutracker, "-1", "0")
-            AutoLabel("value") = "Все форумы"
+            AutoLabel("value") = UiText.T("Все форумы")
         Else
             ForumsSelected(TrackerSelectedID) = String.Join(",", From item As ListViewItem In lsvForums.SelectedItems Select item.SubItems(1).Text)
             AutoLabel("value") = String.Join(" / ", From item As ListViewItem In lsvForums.SelectedItems Select item.SubItems(0).Text.Trim.TrimStart("|", "-", " "))
@@ -136,7 +136,7 @@
         If TrackerSelectedID = Trackers.kinozal Then
             If lsvFormats.SelectedItems.Count = 0 OrElse lsvFormats.Items(0).Selected Then 'nothing selected, empty list or first item selected
                 FormatsSelected(TrackerSelectedID) = "0"
-                AutoLabel("value") &= " (Все форматы)"
+                AutoLabel("value") &= " (" & UiText.T("Все форматы") & ")"
             Else
                 FormatsSelected(TrackerSelectedID) = String.Join(",", From item As ListViewItem In lsvFormats.SelectedItems Select item.SubItems(1).Text)
                 AutoLabel("value") &= " (" & String.Join(" / ", From item As ListViewItem In lsvFormats.SelectedItems Select item.SubItems(0).Text.Trim.TrimStart("|", "-", " ")) & ")"
@@ -151,7 +151,7 @@
         If (e.Item.SubItems(2).Text <> "") Then
             e.Item.Selected = False
         End If
-        grpFormatsBox.Text = "Выбранные форматы: " & lsvFormats.SelectedItems.Count
+        grpFormatsBox.Text = String.Format(UiText.T("Выбранные форматы: {0}"), lsvFormats.SelectedItems.Count)
     End Sub
 
     Private Sub lsvForums_MouseMove(sender As Object, e As MouseEventArgs) Handles lsvForums.MouseMove
@@ -213,6 +213,6 @@
             ctrl.Font = FONT_NORMAL
         Next
 
-        tlpToolTip.SetToolTip(chkAutoLabel, "Позволяет автоматически сгенерировать ""Метку для отображения"" в окне ключевых слов (она будет переименована согласно выбранным форумам)")
+        tlpToolTip.SetToolTip(chkAutoLabel, UiText.T("Позволяет автоматически сгенерировать ""Метку для отображения"" в окне ключевых слов (она будет переименована согласно выбранным форумам)"))
     End Sub
 End Class

@@ -10,11 +10,11 @@ Public Class frmKeyWord
         chkRuTracker.Text = TrackerParams(Trackers.rutracker)("tracker_name")
         chkKinozal.Text = TrackerParams(Trackers.kinozal)("tracker_name")
 
-        lblTCCommandLineHelp.Text = "Пустое поле — клиент Windows по умолчанию."
-        lblTCCommandLineHelp.Text &= vbCrLf & "%ClientPath% — путь к программе по умолчанию для magnet или .torrent"
-        lblTCCommandLineHelp.Text &= vbCrLf & "%TorrentName% — название раздачи"
-        lblTCCommandLineHelp.Text &= vbCrLf & "%TorrentSource% — magnet-ссылка или путь к .torrent"
-        tlpToolTip.SetToolTip(chkSendToClient, "В смешанном правиле оба трекера используют одну команду. Параметры должны подходить обоим источникам.")
+        lblTCCommandLineHelp.Text = UiText.T("Пустое поле — клиент Windows по умолчанию.")
+        lblTCCommandLineHelp.Text &= vbCrLf & UiText.T("%ClientPath% — путь к программе по умолчанию для magnet или .torrent")
+        lblTCCommandLineHelp.Text &= vbCrLf & UiText.T("%TorrentName% — название раздачи")
+        lblTCCommandLineHelp.Text &= vbCrLf & UiText.T("%TorrentSource% — magnet-ссылка или путь к .torrent")
+        tlpToolTip.SetToolTip(chkSendToClient, UiText.T("В смешанном правиле оба трекера используют одну команду. Параметры должны подходить обоим источникам."))
 
         For Each ctrl As Control In Me.Controls
             ctrl.Font = FONT_NORMAL
@@ -25,12 +25,12 @@ Public Class frmKeyWord
         lblForumsRutracker.Font = FONT_UNDERLINE
         lblForumsKinozal.Font = FONT_UNDERLINE
 
-        tlpToolTip.SetToolTip(chkAdditionalFilter, "Можно задать дополнительный фильтр для результирующего набора списка торрентов в Regex-формате (регистр букв не учитывается)")
+        tlpToolTip.SetToolTip(chkAdditionalFilter, UiText.T("Можно задать дополнительный фильтр для результирующего набора списка торрентов в Regex-формате (регистр букв не учитывается)"))
         tlpToolTip.SetToolTip(txtAdditionalFilter, tlpToolTip.GetToolTip(chkAdditionalFilter))
-        tlpToolTip.SetToolTip(txtKeyWord, "Введите фразу для поиска. Пустое поле означает ""Все торренты""")
-        tlpToolTip.SetToolTip(chkUniqueness, "Режим поиска до первого совпадения. Все последующие найденные торренты для этого задания будут игнорироваться." & vbCrLf & _
-                              "Если список найденных торрентов для этого ключевого слова будет очищен, задание переактивируется")
-        tlpToolTip.SetToolTip(chkPause, "Включает или отключает пропуск задания при проверках")
+        tlpToolTip.SetToolTip(txtKeyWord, UiText.T("Введите фразу для поиска. Пустое поле означает ""Все торренты"""))
+        tlpToolTip.SetToolTip(chkUniqueness, UiText.T("Режим поиска до первого совпадения. Все последующие найденные торренты для этого задания будут игнорироваться.") & vbCrLf & _
+                              UiText.T("Если список найденных торрентов для этого ключевого слова будет очищен, задание переактивируется"))
+        tlpToolTip.SetToolTip(chkPause, UiText.T("Включает или отключает пропуск задания при проверках"))
 
     End Sub
 
@@ -54,15 +54,15 @@ Public Class frmKeyWord
                                 If ParseForumResult.Status = clsParse.ParseForumResult.ParseStatuses.parse_ok Then
                                     TrackerParams(tracker_id)("formats") = ParseForumResult.Result.Copy
                                 Else
-                                    MsgBox("Ошибка получения форматов", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+                                    MsgBox(UiText.T("Ошибка получения форматов"), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
                                 End If
                             End If
                         Else
-                            MsgBox("Ошибка получения форумов", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+                            MsgBox(UiText.T("Ошибка получения форумов"), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
                         End If
                     End If
                 Else
-                    MsgBox("Ошибка авторизации", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+                    MsgBox(UiText.T("Ошибка авторизации"), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
                 End If
             End If
         Catch ex As Exception
@@ -72,7 +72,7 @@ Public Class frmKeyWord
 
     Private Sub ResetFields()
         'reset all fields to defaults
-        Me.Text = "Добавление ключевого слова"
+        Me.Text = UiText.T("Добавление ключевого слова")
         txtKeyWordLabel.Text = ""
         txtKeyWord.Text = ""
         chkAdditionalFilter.Checked = False
@@ -83,8 +83,8 @@ Public Class frmKeyWord
         txtTorrentMaxSize.Text = "0"
         chkRuTracker.Checked = False
         chkKinozal.Checked = False
-        lblForumsRutracker.Text = "Разделы Atom"
-        lblForumsKinozal.Text = "Выбрать форумы"
+        lblForumsRutracker.Text = UiText.T("Разделы Atom")
+        lblForumsKinozal.Text = UiText.T("Выбрать форумы")
         lblForumsRutracker.Enabled = chkRuTracker.Checked
         lblRutrackerForumsCount.Enabled = chkRuTracker.Checked
         lblForumsKinozal.Enabled = chkKinozal.Checked
@@ -113,7 +113,7 @@ Public Class frmKeyWord
 
         If KeyWordsSelectedItem > 0 Then
             'edit keyword
-            Me.Text = "Редактирование ключевого слова"
+            Me.Text = UiText.T("Редактирование ключевого слова")
 
             'grpFiltersBox
             txtKeyWordLabel.Text = KeyWordsParams(idx)("label")
@@ -250,14 +250,14 @@ Public Class frmKeyWord
     Private Sub lblForumsRutracker_Click(sender As Object, e As EventArgs) Handles lblForumsRutracker.Click
         Dim ids = clsRuTrackerAtom.ForumIds(ForumsSelected(Trackers.rutracker))
         Dim input = Microsoft.VisualBasic.Interaction.InputBox(
-            "Введите номера разделов RuTracker через запятую. Номер указан после f= в ссылке на раздел." & vbCrLf &
-            "486 — Зимние виды спорта.",
-            "Разделы RuTracker для Atom", String.Join(", ", ids))
+            UiText.T("Введите номера разделов RuTracker через запятую. Номер указан после f= в ссылке на раздел.") & vbCrLf &
+            UiText.T("486 — Зимние виды спорта."),
+            UiText.T("Разделы RuTracker для Atom"), String.Join(", ", ids))
         If input = "" Then Return
 
         ids = clsRuTrackerAtom.ForumIds(input)
         If Not ids.All(AddressOf clsRuTrackerAtom.IsForumId) Then
-            MsgBox("Укажите числовые ID разделов через запятую.", MsgBoxStyle.Exclamation)
+            MsgBox(UiText.T("Укажите числовые ID разделов через запятую."), MsgBoxStyle.Exclamation)
             Return
         End If
         ForumsSelected(Trackers.rutracker) = String.Join(",", ids)
@@ -270,11 +270,11 @@ Public Class frmKeyWord
         If TrackerParams(TrackerSelectedID)("forums").Rows.Count = 0 Then
             grpTrackersBox.Enabled = False
             lblForumsKinozal.Font = FONT_NORMAL
-            lblForumsKinozal.Text = "загружается список..."
+            lblForumsKinozal.Text = UiText.T("загружается список...")
 
             Await GetForumsList(TrackerSelectedID)
 
-            lblForumsKinozal.Text = "Выбрать форумы"
+            lblForumsKinozal.Text = UiText.T("Выбрать форумы")
             lblForumsKinozal.Font = FONT_UNDERLINE
             grpTrackersBox.Enabled = True
         End If
@@ -292,7 +292,7 @@ Public Class frmKeyWord
         Dim cnt_f As Integer 'formats count (always 0 or 1 atm)
 
         Dim atomForums = clsRuTrackerAtom.ForumIds(ForumsSelected(Trackers.rutracker))
-        lblRutrackerForumsCount.Text = If(atomForums.Length = 1, "Раздел " & atomForums(0), "Разделов: " & atomForums.Length)
+        lblRutrackerForumsCount.Text = If(atomForums.Length = 1, String.Format(UiText.T("Раздел {0}"), atomForums(0)), String.Format(UiText.T("Разделов: {0}"), atomForums.Length))
         lblRutrackerForumsCount.Visible = chkRuTracker.Checked
 
         cnt = Split(ForumsSelected(Trackers.kinozal), ",").Count()
@@ -302,11 +302,11 @@ Public Class frmKeyWord
 
         If cnt > 0 Or cnt_f > 0 Then
             If cnt > 0 And cnt_f > 0 Then
-                lblKinozalForumsCount.Text = "Выбрано форумов: " & cnt & ", форматов: " & cnt_f
+                lblKinozalForumsCount.Text = String.Format(UiText.T("Выбрано форумов: {0}, форматов: {1}"), cnt, cnt_f)
             ElseIf cnt > 0 And cnt_f = 0 Then
-                lblKinozalForumsCount.Text = "Выбрано форумов: " & cnt
+                lblKinozalForumsCount.Text = String.Format(UiText.T("Выбрано форумов: {0}"), cnt)
             Else
-                lblKinozalForumsCount.Text = "Выбрано форматов: " & cnt_f
+                lblKinozalForumsCount.Text = String.Format(UiText.T("Выбрано форматов: {0}"), cnt_f)
             End If
             lblKinozalForumsCount.Visible = True
         Else
@@ -329,13 +329,13 @@ Public Class frmKeyWord
         Dim x As Integer 'dummy variable for Integer.TryParse
 
         If Trim(txtKeyWordLabel.Text) = "" Then
-            MsgBox("Метка не может быть пустой!", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Метка не может быть пустой!"), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
             txtKeyWordLabel.Focus()
             Return False
         End If
 
         If chkRuTracker.Checked = False And chkKinozal.Checked = False Then
-            MsgBox("Нужно выбрать хотя бы один трекер!", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Нужно выбрать хотя бы один трекер!"), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
             Return False
         End If
 
@@ -343,28 +343,28 @@ Public Class frmKeyWord
             Try
                 Dim user_rg As New Regex(txtAdditionalFilter.Text, RegexOptions.IgnoreCase, REGEX_TIMEOUT)
             Catch ex As Exception
-                MsgBox("Ошибка ручного фильтра: " & ex.Message, MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+                MsgBox(String.Format(UiText.T("Ошибка ручного фильтра: {0}"), ex.Message), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
                 txtAdditionalFilter.Focus()
                 Return False
             End Try
         End If
 
         If txtTopicID.TextLength <> 0 AndAlso Not Integer.TryParse(txtTopicID.Text, x) Then
-            MsgBox("Неправильный идентификатор темы. Он должен состоять только из цифр", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Неправильный идентификатор темы. Он должен состоять только из цифр"), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
             txtTopicID.SelectAll()
             txtTopicID.Focus()
             Return False
         End If
 
         If Not Integer.TryParse(txtTorrentMinSize.Text, x) Then
-            MsgBox("Неправильный минимальный размер торрента. Размер должен содержать только цифры", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Неправильный минимальный размер торрента. Размер должен содержать только цифры"), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
             txtTorrentMinSize.SelectAll()
             txtTorrentMinSize.Focus()
             Return False
         End If
 
         If Not Integer.TryParse(txtTorrentMaxSize.Text, x) Then
-            MsgBox("Неправильный максимальный размер торрента. Размер должен содержать только цифры", MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
+            MsgBox(UiText.T("Неправильный максимальный размер торрента. Размер должен содержать только цифры"), MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
             txtTorrentMaxSize.SelectAll()
             txtTorrentMaxSize.Focus()
             Return False
@@ -410,7 +410,7 @@ Public Class frmKeyWord
     Private Sub ResetClientCommand(sender As Object, e As EventArgs) Handles lnkResetToUT.LinkClicked, lnkResetToQB.LinkClicked
         Dim isQBittorrent = sender Is lnkResetToQB
         Dim clientName = If(isQBittorrent, "qBittorrent", "µTorrent Classic")
-        Dim answer = MessageBox.Show(Me, $"Восстановить исходную командную строку для {clientName}?", "Сброс команды",
+        Dim answer = MessageBox.Show(Me, String.Format(UiText.T("Восстановить исходную командную строку для {0}?"), clientName), UiText.T("Сброс команды"),
                                      MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2)
         If answer <> DialogResult.Yes Then Return
 

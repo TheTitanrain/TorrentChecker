@@ -22,7 +22,7 @@ Friend Module mdlStartup
             Catch
                 'The error dialog is still available if the temporary directory is unwritable.
             End Try
-            MessageBox.Show(message, "Ошибка запуска TorrentChecker", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            MessageBox.Show(message, UiText.T("Ошибка запуска TorrentChecker"), MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
 End Module
