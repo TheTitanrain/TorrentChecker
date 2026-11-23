@@ -177,6 +177,15 @@ try {
         Assert ($search.Text -ceq 'Ubuntu 24') 'Refreshing the language preserves search input'
     }
 } finally { $form.Dispose() }
+foreach ($code in @('ru', 'en', 'uk', 'kk', 'be')) {
+    $selectLanguage.Invoke($null, @($code))
+    $options = [Activator]::CreateInstance($assembly.GetType('TorrentChecker.frmAppOptions', $true))
+    try {
+        $caption = $options.Controls.Find('Label3', $true)[0]
+        $field = $options.Controls.Find('txtTorrentsStoreTime', $true)[0]
+        Assert (($caption.Left + $caption.PreferredSize.Width) -lt $field.Left) "Retention caption fits before the days field ($code)"
+    } finally { $options.Dispose() }
+}
 $selectLanguage.Invoke($null, @('ru'))
 $form = [Activator]::CreateInstance($assembly.GetType('TorrentChecker.frmAppOptions', $true))
 try {

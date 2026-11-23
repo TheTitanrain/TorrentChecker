@@ -99,7 +99,7 @@ Partial Class frmAppOptions
         '
         'txtCheckInterval
         '
-        Me.txtCheckInterval.Location = New System.Drawing.Point(246, 139)
+        Me.txtCheckInterval.Location = New System.Drawing.Point(294, 139)
         Me.txtCheckInterval.MaxLength = 3
         Me.txtCheckInterval.Name = "txtCheckInterval"
         Me.txtCheckInterval.Size = New System.Drawing.Size(41, 20)
@@ -110,7 +110,7 @@ Partial Class frmAppOptions
         'Label2
         '
         Me.Label2.AutoSize = True
-        Me.Label2.Location = New System.Drawing.Point(293, 142)
+        Me.Label2.Location = New System.Drawing.Point(341, 142)
         Me.Label2.Name = "Label2"
         Me.Label2.Size = New System.Drawing.Size(37, 13)
         Me.Label2.TabIndex = 6
@@ -128,7 +128,7 @@ Partial Class frmAppOptions
         '
         'btnSave
         '
-        Me.btnSave.Location = New System.Drawing.Point(245, 495)
+        Me.btnSave.Location = New System.Drawing.Point(293, 495)
         Me.btnSave.Name = "btnSave"
         Me.btnSave.Size = New System.Drawing.Size(98, 26)
         Me.btnSave.TabIndex = 13
@@ -137,7 +137,7 @@ Partial Class frmAppOptions
         '
         'btnCancel
         '
-        Me.btnCancel.Location = New System.Drawing.Point(349, 495)
+        Me.btnCancel.Location = New System.Drawing.Point(397, 495)
         Me.btnCancel.Name = "btnCancel"
         Me.btnCancel.Size = New System.Drawing.Size(98, 26)
         Me.btnCancel.TabIndex = 14
@@ -155,7 +155,7 @@ Partial Class frmAppOptions
         '
         'txtTorrentsStoreTime
         '
-        Me.txtTorrentsStoreTime.Location = New System.Drawing.Point(246, 162)
+        Me.txtTorrentsStoreTime.Location = New System.Drawing.Point(294, 162)
         Me.txtTorrentsStoreTime.MaxLength = 2
         Me.txtTorrentsStoreTime.Name = "txtTorrentsStoreTime"
         Me.txtTorrentsStoreTime.Size = New System.Drawing.Size(41, 20)
@@ -166,7 +166,7 @@ Partial Class frmAppOptions
         'Label4
         '
         Me.Label4.AutoSize = True
-        Me.Label4.Location = New System.Drawing.Point(293, 165)
+        Me.Label4.Location = New System.Drawing.Point(341, 165)
         Me.Label4.Name = "Label4"
         Me.Label4.Size = New System.Drawing.Size(31, 13)
         Me.Label4.TabIndex = 12
@@ -178,7 +178,7 @@ Partial Class frmAppOptions
         Me.grpTrayBox.Controls.Add(Me.chkHideToTray)
         Me.grpTrayBox.Location = New System.Drawing.Point(12, 12)
         Me.grpTrayBox.Name = "grpTrayBox"
-        Me.grpTrayBox.Size = New System.Drawing.Size(435, 82)
+        Me.grpTrayBox.Size = New System.Drawing.Size(483, 82)
         Me.grpTrayBox.TabIndex = 13
         Me.grpTrayBox.TabStop = False
         Me.grpTrayBox.Text = UiText.T("Трей")
@@ -190,7 +190,7 @@ Partial Class frmAppOptions
         Me.grpRunBox.Controls.Add(Me.chkRunHidden)
         Me.grpRunBox.Location = New System.Drawing.Point(12, 100)
         Me.grpRunBox.Name = "grpRunBox"
-        Me.grpRunBox.Size = New System.Drawing.Size(435, 105)
+        Me.grpRunBox.Size = New System.Drawing.Size(483, 105)
         Me.grpRunBox.TabIndex = 14
         Me.grpRunBox.TabStop = False
         Me.grpRunBox.Text = UiText.T("Запуск")
@@ -225,7 +225,7 @@ Partial Class frmAppOptions
         Me.gprOtherBox.Controls.Add(Me.txtTorrentsStoreTime)
         Me.gprOtherBox.Location = New System.Drawing.Point(12, 211)
         Me.gprOtherBox.Name = "gprOtherBox"
-        Me.gprOtherBox.Size = New System.Drawing.Size(435, 243)
+        Me.gprOtherBox.Size = New System.Drawing.Size(483, 243)
         Me.gprOtherBox.TabIndex = 15
         Me.gprOtherBox.TabStop = False
         Me.gprOtherBox.Text = UiText.T("Разное")
@@ -276,7 +276,7 @@ Partial Class frmAppOptions
         Me.lblClearCache.AutoSize = True
         Me.lblClearCache.Cursor = System.Windows.Forms.Cursors.Hand
         Me.lblClearCache.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, CType(204, Byte))
-        Me.lblClearCache.Location = New System.Drawing.Point(338, 165)
+        Me.lblClearCache.Location = New System.Drawing.Point(386, 165)
         Me.lblClearCache.Name = "lblClearCache"
         Me.lblClearCache.Size = New System.Drawing.Size(77, 13)
         Me.lblClearCache.TabIndex = 18
@@ -285,7 +285,7 @@ Partial Class frmAppOptions
         'Label6
         '
         Me.Label6.AutoSize = True
-        Me.Label6.Location = New System.Drawing.Point(293, 189)
+        Me.Label6.Location = New System.Drawing.Point(341, 189)
         Me.Label6.Name = "Label6"
         Me.Label6.Size = New System.Drawing.Size(70, 13)
         Me.Label6.TabIndex = 17
@@ -293,7 +293,7 @@ Partial Class frmAppOptions
         '
         'txtMaxVisibleResults
         '
-        Me.txtMaxVisibleResults.Location = New System.Drawing.Point(246, 186)
+        Me.txtMaxVisibleResults.Location = New System.Drawing.Point(294, 186)
         Me.txtMaxVisibleResults.MaxLength = 3
         Me.txtMaxVisibleResults.Name = "txtMaxVisibleResults"
         Me.txtMaxVisibleResults.Size = New System.Drawing.Size(41, 20)
@@ -334,7 +334,7 @@ Partial Class frmAppOptions
         '
         Me.languageChoice.DropDownStyle = ComboBoxStyle.DropDownList
         Me.languageChoice.Name = "languageChoice"
-        Me.languageChoice.Location = New Point(245, 460)
+        Me.languageChoice.Location = New Point(293, 460)
         Me.languageChoice.Width = 200
         Me.languageChoice.TabIndex = 12
         Me.languageLabel.AutoSize = True
@@ -344,7 +344,7 @@ Partial Class frmAppOptions
         Me.Controls.Add(Me.languageLabel)
         Me.AutoScaleDimensions = New System.Drawing.SizeF(96.0!, 96.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi
-        Me.ClientSize = New System.Drawing.Size(458, 528)
+        Me.ClientSize = New System.Drawing.Size(506, 528)
         Me.Controls.Add(Me.gprOtherBox)
         Me.Controls.Add(Me.grpRunBox)
         Me.Controls.Add(Me.grpTrayBox)
