@@ -309,10 +309,15 @@ public static class ScanTests
             Check(mdlMain.KeyWordsParams[2][ClientCommandKey] == "", "Kinozal rule saves blank command");
 
             ruTracker.Checked = true;
-            command.Text = @"""C:\Portable Apps\Торренты\deluge.EXE"" %TorrentSource%";
+            foreach (var button in presets.Skip(2))
+            {
+                command.Text = "previous command for " + button.Name;
+                Invoke(button, "OnClick", EventArgs.Empty);
+                Check(command.Text == "%ClientPath% %TorrentSource%", button.Name + " fills the template immediately");
+            }
             Invoke(editor, "btnSave_Click", null, EventArgs.Empty);
             Check(command.Enabled && mdlMain.KeyWordsParams[3][ClientCommandKey] == command.Text,
-                "mixed rule saves the quoted explicit client command");
+                "mixed rule saves the preset command");
             kinozalTracker.Checked = false;
             Check(command.Enabled && presets.All(button => button.Enabled), "RuTracker-only rule enables the same command and presets");
             ruTracker.Checked = false;
@@ -321,23 +326,6 @@ public static class ScanTests
             send.Checked = false;
             Check(!command.Enabled && presets.All(button => !button.Enabled), "turning off automatic sending disables the command and presets");
         }
-    }
-
-    static void CheckExplicitClientTemplate()
-    {
-        var makeTemplate = CommandModule.GetMethod("CreateExplicitClientTemplate", Static);
-        string executable = @"C:\Portable Apps\Торренты\deluge.EXE";
-        var template = (string)makeTemplate.Invoke(null, new object[] { executable });
-        var createStartInfo = CommandModule.GetMethod("CreateClientStartInfo", Static);
-        Func<string, string> unexpectedResolver = association => { throw new Exception("Explicit client must skip association lookup"); };
-        foreach (var source in new[] { Magnet, @"C:\Temporary Files\test.torrent" })
-        {
-            string association = source == Magnet ? "magnet" : ".torrent";
-            var info = (ProcessStartInfo)createStartInfo.Invoke(null, new object[] { template, source, "Test", association, unexpectedResolver });
-            Check(info.FileName == executable && ReadArguments(info).SequenceEqual(new[] { source }), "explicit preset passes the complete source to the chosen executable");
-        }
-        Check(makeTemplate.Invoke(null, new object[] { @"C:\Apps\%TorrentName%\deluge.exe" }) == null &&
-            makeTemplate.Invoke(null, new object[] { @"C:\Apps\deluge.txt" }) == null, "explicit presets reject incompatible paths and non-executable files");
     }
 
     static void CheckMissingClientAssociation()
@@ -361,7 +349,6 @@ public static class ScanTests
         CheckMixedClientCommand();
         CheckClientArgumentsAndFileErrors();
         CheckRuleCommandEditor();
-        CheckExplicitClientTemplate();
         CheckMissingClientAssociation();
         using (var f = new Fixture(1))
         {

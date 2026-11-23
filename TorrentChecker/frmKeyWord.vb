@@ -407,35 +407,18 @@ Public Class frmKeyWord
         End If
     End Sub
 
-    Private Sub ResetAssociatedClientCommand(sender As Object, e As EventArgs) Handles btnResetToUT.Click, btnResetToQB.Click
+    Private Sub ResetClientCommand(sender As Object, e As EventArgs) Handles btnResetToUT.Click, btnResetToQB.Click,
+        btnResetToTransmission.Click, btnResetToDeluge.Click
         Dim isQBittorrent = sender Is btnResetToQB
-        Dim clientName = If(isQBittorrent, "qBittorrent", "µTorrent Classic")
-        Dim answer = MessageBox.Show(Me, $"Восстановить исходную командную строку для {clientName}?", "Сброс команды",
-                                     MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2)
-        If answer = DialogResult.Yes Then
-            Dim arguments = If(isQBittorrent, " --skip-dialog=true ", " ")
-            txtTCCommandLine.Text = clsTorrentClientCommand.ClientToken & arguments & clsTorrentClientCommand.SourceToken
+        If sender Is btnResetToUT OrElse isQBittorrent Then
+            Dim clientName = If(isQBittorrent, "qBittorrent", "µTorrent Classic")
+            Dim answer = MessageBox.Show(Me, $"Восстановить исходную командную строку для {clientName}?", "Сброс команды",
+                                         MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2)
+            If answer <> DialogResult.Yes Then Return
         End If
-    End Sub
 
-    Private Sub ResetExplicitClientCommand(sender As Object, e As EventArgs) Handles btnResetToTransmission.Click, btnResetToDeluge.Click
-        Dim executableName = If(sender Is btnResetToTransmission, "transmission-qt.exe", "deluge.exe")
-        Using dialog As New OpenFileDialog With {
-            .Title = $"Выберите {executableName}",
-            .FileName = executableName,
-            .Filter = "Исполняемые файлы (*.exe)|*.exe",
-            .CheckFileExists = True,
-            .RestoreDirectory = True
-        }
-            If dialog.ShowDialog(Me) <> DialogResult.OK Then Return
-            Dim template = clsTorrentClientCommand.CreateExplicitClientTemplate(dialog.FileName)
-            If template Is Nothing Then
-                MessageBox.Show(Me, "Укажите файл .exe, в пути к которому нет плейсхолдеров команды.", "Сброс команды",
-                                MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                Return
-            End If
-            txtTCCommandLine.Text = template
-        End Using
+        Dim arguments = If(isQBittorrent, " --skip-dialog=true ", " ")
+        txtTCCommandLine.Text = clsTorrentClientCommand.ClientToken & arguments & clsTorrentClientCommand.SourceToken
     End Sub
 
     Private Sub UpdateClientCommandControls()

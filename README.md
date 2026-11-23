@@ -63,7 +63,7 @@ RuTracker: разделы Atom и magnet-ссылки
 %ClientPath% /DIRECTORY "D:\Загрузки" %TorrentSource%
 ```
 
-Для Transmission Qt выберите `transmission-qt.exe`, для Deluge GTK — `deluge.exe`. Кнопка подставит полный путь в кавычках и `%TorrentSource%`. Выбранный EXE будет использоваться для обоих источников независимо от настроек Windows. При отмене выбора в поле остаётся прежняя команда. [Transmission Qt](https://github.com/transmission/transmission/blob/main/qt/main.cc) · [Deluge GTK](https://github.com/deluge-torrent/deluge/blob/develop/deluge/ui/gtk3/__init__.py)
+Кнопки Transmission Qt и Deluge GTK сразу подставляют одинаковый шаблон `%ClientPath% %TorrentSource%`. Назначьте нужный клиент программой по умолчанию для `MAGNET` или `.torrent` в Windows в зависимости от источника. [Transmission Qt](https://github.com/transmission/transmission/blob/main/qt/main.cc) · [Deluge GTK](https://github.com/deluge-torrent/deluge/blob/develop/deluge/ui/gtk3/__init__.py)
 
 В смешанном правиле оба источника используют одну команду. Проверьте, что её параметры подходят обоим источникам и клиентам, если в Windows назначены разные ассоциации. При загрузке старых настроек `%TorrentPath%` заменяется на `%TorrentSource%`, и в смешанных правилах прежняя команда Кинозала сразу применяется также к magnet-ссылкам RuTracker. Это касается и `/DIRECTORY`, для которого приём magnet в µTorrent Classic не подтверждён. Для старых правил только с RuTracker поле начинается пустым.
 
